@@ -1,0 +1,1033 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}
+</style><title>OPERATION BOARD JAKARTA</title><meta name="description" content="Papan operasi kapal SKR dan HAL di Jakarta: ETA, posisi, bongkar muat per service dan operator."><meta name="robots" content="noindex,nofollow"><link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27%3E%3Crect width=%2732%27 height=%2732%27 fill=%27%230f2230%27/%3E%3Cpath d=%27M4 21h24l-4 5H8z%27 fill=%27%23d4562a%27/%3E%3Crect x=%277%27 y=%2712%27 width=%2711%27 height=%278%27 fill=%27%23e5eef2%27/%3E%3Crect x=%2720%27 y=%2715%27 width=%275%27 height=%275%27 fill=%27%2362adde%27/%3E%3C/svg%3E"><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=Noto+Sans+KR:wght@400;500;600;700&display=swap"></head><body>
+
+
+<style>
+/* Layout: papan jadwal pelabuhan. Pemilih bahasa (ID/EN/KO) di header, strip sumber data, KPI, kartu kapal yang hampir tiba, peringatan, timeline, tabel semua kapal. */
+:root{
+  --bg:#e7ecee; --surface:#f6f9f9; --ink:#0f2230; --muted:#53687a; --line:#cbd6da;
+  --accent:#d4562a; --ais:#1d5f8c; --ok:#23795c; --warn:#a96d12; --bad:#b3372f; --chip:#dde6e9;
+  --display:"Barlow Condensed","Noto Sans KR","Arial Narrow",sans-serif; --body:"IBM Plex Sans","Noto Sans KR",system-ui,sans-serif; --mono:"IBM Plex Mono","Noto Sans KR",ui-monospace,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0b151c; --surface:#111f29; --ink:#e5eef2; --muted:#93a8b4; --line:#243746;
+  --accent:#f27d50; --ais:#62adde; --ok:#4fc095; --warn:#e2b24c; --bad:#f0827a; --chip:#192b37; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0b151c; --surface:#111f29; --ink:#e5eef2; --muted:#93a8b4; --line:#243746;
+  --accent:#f27d50; --ais:#62adde; --ok:#4fc095; --warn:#e2b24c; --bad:#f0827a; --chip:#192b37; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:14px;line-height:1.45;margin:0;padding-inline:16px;padding-block:24px 48px}
+.wrap{max-width:1180px;margin:0 auto;display:flex;flex-direction:column;gap:26px}
+.mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+h1,h2,.num{font-family:var(--display);font-weight:600;letter-spacing:.01em;margin:0}
+html[lang="ko"] h1,html[lang="ko"] h2{letter-spacing:0}
+header{display:flex;flex-wrap:wrap;gap:12px 24px;justify-content:space-between;align-items:flex-end}
+.eyebrow{font-family:var(--mono);font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;color:var(--accent)}
+h1{font-size:clamp(2rem,5vw,3.1rem);line-height:1;text-wrap:balance}
+.side{display:flex;flex-direction:column;align-items:flex-end;gap:10px;min-width:0}
+.clock{text-align:right}
+.clock .num{font-size:2.2rem;line-height:1}
+.clock small{display:block;color:var(--muted);font-family:var(--mono);font-size:.72rem}
+.fresh{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:10px}
+.chip{border:1px solid var(--line);background:var(--surface);padding:9px 12px;display:flex;flex-direction:column;gap:2px;min-width:0}
+.chip b{font-size:.7rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.chip span{font-family:var(--mono);font-size:.82rem}
+.chip i{font-style:normal;font-size:.76rem}
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;background:var(--ok)}
+.dot.warn{background:var(--warn)}.dot.bad{background:var(--bad)}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px}
+.kpi{background:var(--surface);border:1px solid var(--line);padding:12px 14px}
+a.kpi{display:block;color:inherit;text-decoration:none;cursor:pointer;position:relative;transition:border-color .15s,background .15s}
+a.kpi:hover{border-color:var(--accent)}
+a.kpi:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+a.kpi::after{content:"\2193";position:absolute;right:12px;top:10px;font-family:var(--mono);color:var(--muted)}
+a.kpi:hover::after{color:var(--accent)}
+.kpi .num{font-size:2.4rem;line-height:1}
+section{scroll-margin-top:16px}
+.globe{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,.85fr);gap:12px;align-items:start}
+@media(max-width:860px){.globe{grid-template-columns:minmax(0,1fr)}}
+.gl-stage{background:radial-gradient(120% 90% at 50% 0%,#0b2740 0%,#050f1b 62%);border:1px solid #17405c;padding:10px;min-width:0;color:#cfe6f3;box-shadow:0 12px 40px rgba(0,25,60,.35)}
+.gl-stage .vsub,.gl-stage .legend{color:#9fc3d6}
+.gl-stage .legend svg rect{stroke:#e8f6ff}
+#glc{display:block;width:100%;aspect-ratio:1/1;max-height:660px;cursor:grab;touch-action:none}
+#glc.drag{cursor:grabbing}
+.gl-ctrl{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-top:8px}
+.gl-ctrl button{font:inherit;background:rgba(160,215,255,.08);color:#e3f3fc;border:1px solid rgba(140,205,255,.3);padding:5px 12px;cursor:pointer}
+.gl-ctrl button:hover{background:rgba(160,215,255,.18)}
+.gl-ctrl button[aria-pressed="true"]{background:#35c6ff;color:#03202f;border-color:#35c6ff}
+.gl-ctrl button:focus-visible,.gl-item:focus-visible,.gl-time input:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.gl-time{display:flex;flex-direction:column;gap:4px;margin-top:10px}
+.gl-time input[type=range]{width:100%;accent-color:#35c6ff}
+.gl-time .mono{color:#e3f3fc}
+.gl-hint{margin:8px 0 0}
+.gl-side{display:flex;flex-direction:column;gap:10px;min-width:0}
+.gl-list{display:flex;flex-direction:column;gap:6px;min-width:0}
+@media(min-width:861px){.gl-list{max-height:560px;overflow-y:auto}}
+.gl-item{text-align:left;font:inherit;color:var(--ink);background:var(--surface);border:1px solid var(--line);padding:8px 10px;cursor:pointer;display:flex;flex-direction:column;gap:2px;min-width:0}
+.gl-item:hover{border-color:var(--muted)}
+.gl-item[aria-pressed="true"]{border-color:var(--accent);box-shadow:inset 3px 0 0 var(--accent)}
+.gl-item .dot{margin-right:6px}
+.gl-note{font-size:.8rem;color:var(--muted)}
+.jump{animation:jump 1.4s ease-out}
+@keyframes jump{0%,35%{box-shadow:0 0 0 3px var(--accent)}100%{box-shadow:0 0 0 3px transparent}}
+@media (prefers-reduced-motion:reduce){.jump{animation:none;outline:2px solid var(--accent)}a.kpi{transition:none}}
+.kpi small{display:block;color:var(--muted);margin-top:4px}
+.kpi.hot .num{color:var(--accent)}
+h2{font-size:1.5rem;display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 10px;margin-bottom:10px}
+h2 small{font-family:var(--body);font-weight:400;font-size:.8rem;color:var(--muted)}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(320px,100%),1fr));gap:12px}
+.vcard{background:var(--surface);border:1px solid var(--line);padding:14px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.vhead{display:flex;justify-content:space-between;gap:8px;align-items:flex-start;flex-wrap:wrap}
+.vname{font-family:var(--display);font-size:1.7rem;font-weight:600;line-height:1}
+.vsub{color:var(--muted);font-size:.8rem}
+.eta-big{text-align:right}
+.eta-big .num{font-size:2rem;line-height:1;color:var(--accent)}
+.eta-big small{display:block;font-family:var(--mono);font-size:.72rem;color:var(--muted)}
+.route{display:flex;flex-direction:column;gap:4px}
+.route .bar{position:relative;height:6px;background:var(--chip);border-radius:3px}
+.route .bar i{position:absolute;left:0;top:0;bottom:0;background:var(--ais);border-radius:3px}
+.route .bar em{position:absolute;top:-5px;width:16px;height:16px;margin-left:-8px;border-radius:50%;background:var(--accent);border:3px solid var(--surface)}
+.route .ends{display:flex;justify-content:space-between;font-size:.76rem;color:var(--muted);gap:8px}
+.route .ends b{color:var(--ink);font-weight:600}
+dl{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 14px;margin:0}
+dl div{min-width:0}
+dt{font-size:.68rem;letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
+dd{margin:0;font-family:var(--mono);font-size:.82rem}
+dd s{color:var(--bad);text-decoration:line-through;text-decoration-thickness:1px}
+.pill{display:inline-block;font-size:.72rem;font-weight:600;padding:1px 8px;border:1px solid currentColor;border-radius:99px;white-space:nowrap}
+.pill.ok{color:var(--ok)}.pill.warn{color:var(--warn)}.pill.bad{color:var(--bad)}.pill.info{color:var(--ais)}
+.alerts{display:flex;flex-direction:column;gap:8px}
+.alert{display:grid;grid-template-columns:auto minmax(0,1fr);gap:10px;background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--warn);padding:9px 12px}
+.alert.bad{border-left-color:var(--bad)}.alert.info{border-left-color:var(--ais)}
+.alert .tag{font-family:var(--mono);font-size:.72rem;color:var(--muted);white-space:nowrap}
+.alert b{font-weight:600}
+.panel{background:var(--surface);border:1px solid var(--line);padding:14px}
+.scroll{overflow-x:auto}
+svg text{fill:var(--ink);font-family:var(--body);font-size:11px}
+svg .m{fill:var(--muted)}
+svg .grid{stroke:var(--line);stroke-width:1}
+svg .now{stroke:var(--accent);stroke-width:1.5;stroke-dasharray:4 3}
+.legend{display:flex;flex-wrap:wrap;gap:6px 18px;font-size:.78rem;color:var(--muted);margin-top:8px}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.tools{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px;align-items:center}
+.seg{display:inline-flex;border:1px solid var(--line);max-width:100%}
+.seg button{font:inherit;background:var(--surface);color:var(--ink);border:0;padding:6px 14px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+.seg button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.lang button{padding:5px 12px;font-size:.82rem}
+input[type=search]{font:inherit;background:var(--surface);color:var(--ink);border:1px solid var(--line);padding:6px 10px;min-width:0;width:220px;max-width:100%}
+table{border-collapse:collapse;width:100%;min-width:980px;background:var(--surface)}
+th,td{border-bottom:1px solid var(--line);padding:9px 10px;text-align:left;vertical-align:top}
+th{font-size:.68rem;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);font-weight:600;white-space:nowrap;background:var(--chip)}
+td .sub{display:block;color:var(--muted);font-size:.76rem}
+td .nm{font-weight:600}
+.notes{color:var(--muted);font-size:.84rem;display:flex;flex-direction:column;gap:5px;margin:0;padding-left:18px}
+@media(max-width:520px){dl{grid-template-columns:1fr}.clock{text-align:left}.side{align-items:flex-start}}
+.cg-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px}
+.cg-k{background:var(--surface);border:1px solid var(--line);padding:12px 14px;display:flex;flex-direction:column;gap:2px}
+.cg-k b{font-family:var(--display);font-size:2rem;line-height:1.05;font-weight:600;font-variant-numeric:tabular-nums}
+.cg-k span{font-size:.74rem;letter-spacing:.07em;text-transform:uppercase;color:var(--muted)}
+.cg-k i{font-style:normal;font-size:.76rem;color:var(--muted)}
+.cg-grid{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:14px}
+@media(max-width:900px){.cg-grid{grid-template-columns:minmax(0,1fr)}}
+.cg-grid>*{min-width:0}
+.cg-stack{display:flex;flex-direction:column;gap:14px;margin-top:14px}
+.cg-t td .vsub{display:inline}
+.dot{display:inline-block;width:10px;height:10px;border-radius:50%}
+.cg-h3{font-size:.74rem;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);font-weight:600;margin:0 0 8px}
+.cg-t{min-width:0;width:100%}.cg-t th,.cg-t td{white-space:nowrap}.cg-t td.n,.cg-t th.n{text-align:right;font-variant-numeric:tabular-nums}
+.cg-t tr.tot td{font-weight:600;background:var(--chip)}
+.cg-bars{display:flex;flex-direction:column;gap:14px}
+.cg-bg{display:flex;flex-direction:column;gap:5px}
+.cg-bl{font-size:.8rem;color:var(--muted)}
+.cg-br{display:grid;grid-template-columns:44px 1fr 64px;gap:8px;align-items:center;font-size:.82rem}
+.cg-br .tr{height:14px;background:var(--chip)}
+.cg-br .fl{height:100%;min-width:0}
+.cg-br .v{text-align:right;font-variant-numeric:tabular-nums;font-family:var(--mono)}
+.cg-m{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center}
+.cg-plan{font-size:.84rem;color:var(--muted);margin:0}
+.cg-d.pos{color:var(--warn)}.cg-d.neg{color:var(--bad)}.cg-d.zero{color:var(--ok)}
+.hero{position:relative;border:1px solid var(--line);overflow:hidden;background:#061425;box-shadow:0 10px 30px rgba(6,20,37,.22)}
+.hero-art{aspect-ratio:1200/290;width:100%}
+.hero-art svg{display:block}
+.hero-cap{position:absolute;top:10px;right:12px;font-family:var(--mono);font-size:.68rem;letter-spacing:.06em;color:#cfe3f1;background:rgba(6,20,37,.55);padding:3px 8px;border:1px solid rgba(160,215,255,.22)}
+.hero-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:8px;padding:10px;background:#061425}
+@media(min-width:760px){.hero-stats{grid-template-columns:repeat(3,minmax(0,1fr))}}
+.hero-stats>div{background:rgba(6,20,37,.74);border:1px solid rgba(160,215,255,.26);padding:9px 12px;color:#e6f2f9;display:flex;flex-direction:column;gap:1px;min-width:0;backdrop-filter:blur(6px)}
+.hero-stats span{font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;color:#9fc3d6}
+.hero-stats b{font-family:var(--display);font-weight:600;font-size:1.55rem;line-height:1.1;overflow-wrap:anywhere}
+.hero-stats i{font-style:normal;font-size:.76rem;color:#b9d3e2;overflow-wrap:anywhere}
+@media(max-width:600px){.hero-cap{position:static;display:block;border:0;border-top:1px solid rgba(160,215,255,.2);background:#061425;padding:6px 10px}}
+.ship{animation:bob 5.5s ease-in-out infinite}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
+.wv1{animation:drift 16s linear infinite}.wv2{animation:drift 24s linear infinite reverse}
+@keyframes drift{to{transform:translateX(-420px)}}
+@media (prefers-reduced-motion:reduce){.ship,.wv1,.wv2{animation:none}}
+.jumpnav{position:sticky;top:env(safe-area-inset-top,0px);z-index:6;display:flex;gap:6px;overflow-x:auto;padding-block:8px;background:var(--bg);scrollbar-width:none}
+.jumpnav::-webkit-scrollbar{display:none}
+.jumpnav a{flex:none;white-space:nowrap;padding:6px 14px;border:1px solid var(--line);background:var(--surface);color:var(--ink);text-decoration:none;font-size:.82rem}
+.jumpnav a:hover{border-color:var(--accent);color:var(--accent)}
+.jumpnav a:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+section{scroll-margin-top:60px}
+h2{padding-bottom:6px;border-bottom:1px solid var(--line)}
+.kpi{border-top:3px solid var(--ais)}.kpi.hot{border-top-color:var(--accent)}
+.panel,.kpi,.chip,.gl-item,.cg-k{box-shadow:0 1px 2px rgba(15,34,48,.07)}
+.cg-k{border-top:3px solid var(--accent)}
+</style>
+
+<div class="wrap">
+<header>
+  <div>
+    <div class="eyebrow" data-i18n="eyebrow"></div>
+    <h1>OPERATION BOARD JAKARTA</h1>
+  </div>
+  <div class="side">
+    <div class="seg lang" role="group" data-i18n-aria="lang_aria">
+      <button type="button" data-l="id" aria-pressed="true" lang="id">Indonesia</button>
+      <button type="button" data-l="en" aria-pressed="false" lang="en">English</button>
+      <button type="button" data-l="ko" aria-pressed="false" lang="ko">한국어</button>
+    </div>
+    <div class="clock"><div class="num mono" id="clock">--:--</div><small id="clockDate"></small></div>
+  </div>
+</header>
+
+<section class="hero" id="hero"><div class="hero-art" id="hero-art"></div><div class="hero-cap" id="hero-cap"></div><div class="hero-stats" id="hero-stats"></div></section>
+<nav class="jumpnav" id="jumpnav"><a href="#sec-near" data-go="sec-near"></a><a href="#sec-globe" data-go="sec-globe"></a><a href="#sec-alerts" data-go="sec-alerts"></a><a href="#sec-cargo" data-go="sec-cargo"></a><a href="#sec-all" data-go="sec-all"></a></nav>
+<div class="fresh" id="fresh"></div>
+<div class="kpis" id="kpis"></div>
+
+<section id="sec-near"><h2><span data-i18n="h_near"></span> <small data-i18n="h_near_s"></small></h2><div class="cards" id="near"></div></section>
+<section id="sec-globe"><h2><span data-i18n="gl_h"></span> <small data-i18n="gl_h_s"></small></h2>
+  <div class="globe">
+    <div class="gl-stage">
+      <canvas id="glc" role="img"></canvas>
+      <div class="gl-ctrl">
+        <button type="button" id="gl-zi" aria-label="Zoom +">+</button><button type="button" id="gl-zo" aria-label="Zoom -">&minus;</button>
+        <button type="button" id="gl-rs" data-i18n="gl_reset"></button>
+        <button type="button" id="gl-play" aria-pressed="false"></button>
+        <button type="button" id="gl-now" data-i18n="gl_now"></button>
+        <button type="button" id="gl-spin" aria-pressed="false" data-i18n="gl_spin"></button>
+      </div>
+      <div class="gl-time"><label for="gl-t" class="vsub" data-i18n="gl_time"></label><input type="range" id="gl-t" min="-72" max="168" step="0.25" value="0"><div class="mono" id="gl-tl"></div></div>
+      <div class="legend"><span><i class="dot" style="background:#ff8a4c"></i>SKR</span><span><i class="dot" style="background:#46d1ff"></i>HAL</span><span><i class="dot" style="background:#7dffa8"></i><span data-i18n="gl_lg_act"></span></span><span><i class="dot" style="background:#ff5d5d"></i><span data-i18n="gl_lg_wait"></span></span><span><i class="dot" style="background:#ffd166"></i><span data-i18n="gl_lg_port"></span></span></div>
+      <p class="vsub gl-hint" data-i18n="gl_hint"></p>
+    </div>
+    <div class="gl-side"><div class="gl-list" id="gl-list"></div><div class="panel gl-note" data-i18n="gl_note"></div></div>
+  </div>
+</section>
+<section id="sec-alerts"><h2><span data-i18n="h_alert"></span> <small data-i18n="h_alert_s"></small></h2><div class="alerts" id="alerts"></div></section>
+<section><h2><span data-i18n="h_tl"></span> <small data-i18n="h_tl_s"></small></h2>
+  <div class="panel"><div class="scroll"><div id="tl" style="min-width:760px"></div></div>
+  <div class="legend">
+    <span><svg width="14" height="14"><circle cx="7" cy="7" r="5" fill="none" stroke="var(--ink)" stroke-width="2"/></svg><span data-i18n="lg_mail"></span></span>
+    <span><svg width="14" height="14"><path d="M7 1 13 7 7 13 1 7z" fill="var(--ais)"/></svg><span data-i18n="lg_ais"></span></span>
+    <span><svg width="14" height="14"><rect x="2" y="2" width="10" height="10" fill="var(--accent)"/></svg><span data-i18n="lg_berth"></span></span>
+    <span><svg width="26" height="8"><rect x="0" y="2" width="26" height="4" fill="var(--muted)" opacity=".45"/></svg><span data-i18n="lg_range"></span></span>
+  </div></div>
+</section>
+<section id="sec-cargo"><h2><span id="cg-h"></span> <small id="cg-hs"></small></h2>
+  <div class="cg-m" style="margin-bottom:10px"><div class="seg" role="group" id="cg-months"></div><span class="vsub" id="cg-basis"></span></div>
+  <div class="cg-kpis" id="cg-kpis"></div>
+  <div class="panel" style="margin-top:14px"><h3 class="cg-h3" id="cg-h-svc"></h3><div class="scroll" id="cg-svc"></div></div>
+  <div class="cg-stack" id="cg-svcs"></div>
+  <div class="panel" style="margin-top:14px"><h3 class="cg-h3" id="cg-h-op"></h3><div id="cg-allch"></div></div>
+  <div class="panel" style="margin-top:14px"><h3 class="cg-h3" id="cg-h-v"></h3><div class="scroll" id="cg-v"></div><p class="cg-plan" id="cg-plan" style="margin-top:10px"></p></div>
+  <ul class="notes" id="cg-notes" style="margin-top:12px"></ul>
+</section>
+<section id="sec-all"><h2><span data-i18n="h_all"></span> <small id="count"></small></h2>
+  <div class="tools">
+    <div class="seg" role="group" data-i18n-aria="filter_aria"><button type="button" data-f="ALL" aria-pressed="true" data-i18n="f_all"></button><button type="button" data-f="SKR" aria-pressed="false">SKR</button><button type="button" data-f="HAL" aria-pressed="false">HAL</button></div>
+    <label class="vsub" for="q" style="display:none" data-i18n="search_lbl"></label><input type="search" id="q" data-i18n-ph="search_ph">
+  </div>
+  <div class="scroll"><table><thead><tr>
+    <th data-i18n="th_vessel"></th><th data-i18n="th_ais"></th><th data-i18n="th_atd"></th><th data-i18n="th_next"></th><th data-i18n="th_jkt"></th><th data-i18n="th_etb"></th><th data-i18n="th_web"></th><th data-i18n="th_delay"></th><th data-i18n="th_status"></th>
+  </tr></thead><tbody id="rows"></tbody></table></div>
+</section>
+<section><h2 data-i18n="h_notes"></h2><ul class="notes" id="notes"></ul></section>
+</div>
+
+<script>
+var SNAP={"vessels": [{"ais": {"area": "East China Sea", "at": "2026-10-12T17:10:00+07:00", "course": 119, "speed": 0, "status": "Moored"}, "id": "chennai-voyager", "jkt": {"cause": "Port congestion (CNSHA)", "delayH": 709, "eta": "2026-10-20T04:00:00+07:00", "etb": "2026-10-20T05:00:00+07:00", "fixEta": "2026-09-20T15:00:00+07:00", "note": "CNSHA terminal pindah WGQ#5 ke WGQ#1; ETB CNSHA & KRPUS tertunda congestion (fixed). ETD IDJKT 2026-10-22T04:00", "src": "cmlim", "srcDate": "2026-10-10T12:37:00+07:00"}, "last": {"atd": "2026-10-07T13:33:00+07:00", "code": "KRKAN", "port": "Gwangyang"}, "name": "CHENNAI VOYAGER", "next": {"arrived": "2026-10-11T21:27:00+07:00", "code": "CNSHA", "eta": "2026-10-11T16:20:00+07:00", "port": "Shanghai"}, "op": "SKR", "phase": "moored_other", "svc": "PCI", "term": {"berth": "2026-10-19T22:00:00+07:00", "closing": "", "eta": "2026-10-19T16:00:00+07:00", "etd": "2026-10-21T19:00:00+07:00", "name": "JICT T1", "status": "PLAN"}, "voy": "2609N"}, {"ais": {"area": "East China Sea", "at": "2026-10-12T17:13:00+07:00", "course": 40, "speed": 0, "status": "At anchor"}, "id": "heung-a-bangkok", "jkt": {"cause": "", "delayH": 155, "eta": "2026-10-21T12:00:00+07:00", "etb": "2026-10-21T14:00:00+07:00", "fixEta": "2026-10-15T01:00:00+07:00", "note": "2612S KRPUS 1WK sliding; CNSHA double calling SHA (11 & 14 Okt) untuk top-priority discharging. ETD IDJKT 2026-10-22T10:00. Koja berthing 23/10 vs ETB email 21/10", "src": "sendonly04", "srcDate": "2026-10-12T16:10:00+07:00"}, "last": {"atd": "2026-10-11T16:29:00+07:00", "code": "CNSHA", "port": "Shanghai"}, "name": "HEUNG-A BANGKOK", "next": {"arrived": "", "code": "CNSHA", "eta": "2026-10-11T01:04:00+07:00", "port": "Shanghai"}, "op": "HAL", "phase": "waiting_other", "svc": "PCI2", "term": {"berth": "2026-10-23T07:00:00+07:00", "closing": "2026-10-17T05:30:00+07:00", "eta": "", "etd": "2026-10-24T18:00:00+07:00", "name": "Koja", "status": ""}, "voy": "2612N"}, {"ais": {"area": "South China", "at": "2026-10-12T17:08:00+07:00", "course": 207, "speed": 12.1, "status": "Underway using engine"}, "id": "hochiminh-voyager", "jkt": {"cause": "Port congestion (KRPUS)", "delayH": 350, "eta": "2026-10-15T15:00:00+07:00", "etb": "2026-10-15T17:00:00+07:00", "fixEta": "2026-10-01T01:00:00+07:00", "note": "2609S KRPUS P/IN PCI2 port congestion; 2610S KRPUS 1WK sliding. ETD IDJKT 2026-10-16T13:00. Koja berthing 19/10 jauh di belakang ETB email (15/10)", "src": "sendonly04", "srcDate": "2026-10-06T09:12:00+07:00"}, "last": {"atd": "2026-10-08T21:38:00+07:00", "code": "CNSHA", "port": "Shanghai"}, "name": "HOCHIMINH VOYAGER", "next": {"arrived": "", "code": "IDJKT", "eta": "2026-10-15T17:30:00+07:00", "port": "Jakarta"}, "op": "SKR", "phase": "enroute_jkt", "svc": "PCI2", "term": {"berth": "2026-10-19T09:00:00+07:00", "closing": "2026-10-08T04:00:00+07:00", "eta": "", "etd": "2026-10-21T02:00:00+07:00", "name": "Koja", "status": ""}, "voy": "2609N"}, {"ais": {"area": "North China", "at": "2026-10-12T17:15:00+07:00", "course": 238, "speed": 0.8, "status": "Underway using engine"}, "id": "incheon-voyager", "jkt": {"cause": "", "delayH": 399, "eta": "2026-10-28T06:00:00+07:00", "etb": "2026-10-28T08:00:00+07:00", "fixEta": "2026-10-11T15:00:00+07:00", "note": "2608S KRPUS phase in PCI (155 cycle); 2608N VNSGN skip; CNSHA terminal WGQ#5 ke WGQ#1 (congestion). ETD IDJKT 2026-10-29T17:00", "src": "cmlim", "srcDate": "2026-10-08T14:25:00+07:00"}, "last": {"atd": "2026-10-10T21:33:00+07:00", "code": "KRINC", "port": "Incheon"}, "name": "INCHEON VOYAGER", "next": {"arrived": "", "code": "KRPUS", "eta": "2026-10-13T05:00:00+07:00", "port": "Busan"}, "op": "SKR", "phase": "underway_other", "svc": "PCI", "term": {"berth": "", "closing": "", "eta": "", "etd": "", "name": "", "status": ""}, "voy": "2608N"}, {"ais": {"area": "North China", "at": "2026-10-12T17:14:00+07:00", "course": 26, "speed": 0, "status": "Moored"}, "id": "kwangyang-voyager", "jkt": {"cause": "Port congestion (KRPUS, CNSHA)", "delayH": 689, "eta": "2026-10-26T08:00:00+07:00", "etb": "2026-10-26T10:00:00+07:00", "fixEta": "2026-09-27T15:00:00+07:00", "note": "2609S KRPUS P/IN PCI substitute SBVG, ETB KRPUS tertunda congestion; 2609N CNSHA terminal WGQ#5 ke WGQ#1; KRPUS phase out. ETD IDJKT 2026-10-28T06:00", "src": "cmlim", "srcDate": "2026-10-11T19:32:00+07:00"}, "last": {"atd": "2026-10-10T11:34:00+07:00", "code": "CNSHA", "port": "Shanghai"}, "name": "KWANGYANG VOYAGER", "next": {"arrived": "2026-10-12T16:16:00+07:00", "code": "KRPUS", "eta": "2026-10-12T16:00:00+07:00", "port": "Busan"}, "op": "SKR", "phase": "moored_other", "svc": "PCI", "term": {"berth": "", "closing": "", "eta": "", "etd": "", "name": "", "status": ""}, "voy": "2609N"}, {"ais": {"area": "Gulf of Thailand", "at": "2026-10-12T17:15:00+07:00", "course": 61, "speed": 8.8, "status": "Underway using engine"}, "id": "sawasdee-sunrise", "jkt": {"cause": "", "delayH": 216, "eta": "2026-10-31T01:00:00+07:00", "etb": "2026-10-31T03:00:00+07:00", "fixEta": "2026-10-22T01:00:00+07:00", "note": "Vessel change: menggantikan Sawasdee Vega (2613S KRPUS P/IN PCI2). ETD IDJKT 2026-10-31T23:00. AIS: sedang di Gulf of Thailand menuju Bangkok (ETA AIS 15.15 sudah lewat)", "src": "sendonly04", "srcDate": "2026-10-08T14:27:00+07:00"}, "last": {"atd": "2026-10-12T03:24:00+07:00", "code": "THLCH", "port": "Laem Chabang"}, "name": "SAWASDEE SUNRISE", "next": {"arrived": "", "code": "THBKK", "eta": "2026-10-12T15:15:00+07:00", "port": "Bangkok"}, "op": "SKR", "phase": "underway_other", "svc": "PCI2", "term": {"berth": "", "closing": "", "eta": "", "etd": "", "name": "", "status": ""}, "voy": "2612N"}, {"ais": {"area": "South China", "at": "2026-10-12T10:30:00+07:00", "course": 214, "speed": 15.1, "status": "Underway using engine"}, "id": "tianjin-voyager", "jkt": {"cause": "Berth congestion (KRPUS, KRPNC, SGSIN, IDJKT)", "delayH": 130, "eta": "2026-10-19T16:30:00+07:00", "etb": "2026-10-20T18:00:00+07:00", "fixEta": "2026-10-14T06:30:00+07:00", "note": "2609N IDJKT 1 week retard / berth congestion (belum fixed). ETD IDJKT 2026-10-22T09:00. JICT berthing 21/10 22:00 vs ETB email 20/10 18:00", "src": "sendonly03", "srcDate": "2026-10-12T09:31:00+07:00"}, "last": {"atd": "2026-10-11T19:24:00+07:00", "code": "HKHKG", "port": "Hong Kong"}, "name": "TIANJIN VOYAGER", "next": {"arrived": "", "code": "SGSIN", "eta": "2026-10-16T18:00:00+07:00", "port": "Singapore"}, "op": "HAL", "phase": "underway_other", "svc": "KI1", "term": {"berth": "2026-10-21T22:00:00+07:00", "closing": "", "eta": "2026-10-19T18:00:00+07:00", "etd": "2026-10-23T16:00:00+07:00", "name": "JICT T1", "status": "PLAN"}, "voy": "2609N"}], "meta": {"aisAt": "2026-10-12T17:17:00+07:00", "emailAt": "2026-10-12T17:15:00+07:00", "note": "Semua sumber berhasil dibaca 12/10 (Outlook classic via computer use; Koja & JICT dan MarineTraffic via browser bawaan; Chrome extension tidak terhubung). Email: cmlim terbaru per kapal (Kwangyang & Shanghai 11/10, Chennai 10/10, Incheon 08/10), sendonly04 (Heung-A Bangkok 12/10 16.10, Hochiminh 06/10, Sawasdee Rigel P.OUT 12/10, Sunrise/Vega 08/10), sendonly03 (Tianjin 12/10 09.31); tidak ada Fleet Deployment PCI baru sejak 29/09. Dihapus karena sudah berangkat dari IDJKT: Shanghai Voyager (ETD 09/10, JICT SAILING), Sawasdee Rigel (ETD 08/10); Sawasdee Vega dihapus karena 2613S diganti Sawasdee Sunrise (ditambahkan). Koordinat tidak tersedia (versi gratis). Catatan: panel baca Outlook otomatis menandai beberapa email sebagai sudah dibaca; sebuah jendela email baru kosong terbuka tidak sengaja dan ditutup tanpa disimpan/dikirim.", "webAt": "2026-10-12T17:12:00+07:00"}};
+var VESSELS=SNAP.vessels, META=SNAP.meta, LIVE=false, FILTER='ALL', QUERY='';
+var TZ='Asia/Jakarta';
+
+/* ===== Bahasa / Language / 언어 ===== */
+var LANGS=['id','en','ko'], LANG='id', S;
+var LOCALE={id:'id-ID',en:'en-GB',ko:'ko-KR'};
+var T={
+id:{
+ eyebrow:'Operasi Kapal · SKR dan HAL · Jakarta', lang_aria:'Bahasa',
+ h_near:'Hampir tiba di Jakarta', h_near_s:'kapal yang sudah berlayar ke IDJKT, ETA dari AIS',
+ h_alert:'Perlu perhatian', h_alert_s:'dihitung otomatis dari perbandingan sumber',
+ h_tl:'Timeline ETA dan ETB', h_tl_s:'3 minggu ke depan, waktu WIB',
+ lg_mail:'ETA email agen', lg_ais:'ETA AIS', lg_berth:'Berthing web terminal', lg_range:'ETA ke ETB email',
+ h_all:'Semua kapal', f_all:'Semua', filter_aria:'Filter operator', search_lbl:'Cari kapal', search_ph:'Cari kapal atau service',
+ th_vessel:'Kapal', th_ais:'Posisi AIS', th_atd:'ETD last port', th_next:'ETA next port', th_jkt:'ETA Jakarta', th_etb:'ETB (email)', th_web:'Web terminal', th_delay:'Terlambat', th_status:'Status',
+ h_notes:'Catatan sumber',
+ gl_h:'Globe 4D posisi kapal', gl_h_s:'3D dengan sumbu waktu, posisi estimasi dari rute dan jadwal', gl_reset:'Reset tampilan', gl_play:'Putar', gl_pause:'Jeda', gl_now:'Sekarang', gl_time:'Waktu (geser untuk melihat posisi lampau dan prakiraan)',
+ gl_lg_wait:'Labuh jangkar, terlambat', gl_spin:'Putar otomatis', gl_lg_act:'AIS aktual', gl_actual:function(s,a){return 'Posisi AIS aktual ('+s+', '+a+')'}, gl_lg_port:'Pelabuhan', gl_hint:'Seret untuk memutar globe, roda mouse atau tombol +/− untuk zoom, klik kapal untuk memilih.',
+ gl_note:'Penanda dengan cincin hijau memakai koordinat AIS aktual dari sumber publik (sumber dan umur data tampil di daftar). Kapal lain berupa estimasi dari rute pelayaran, ATD pelabuhan terakhir, dan ETA pelabuhan berikutnya. Koordinat MarineTraffic versi gratis terkunci, jadi cocokkan dengan perairan AIS di daftar. Peta garis pantai disederhanakan dan hanya mencakup Asia-Pasifik.',
+ gl_aria:'Globe 3D posisi estimasi kapal SKR dan HAL', gl_ais:'AIS', gl_unk:'Posisi belum bisa diestimasi',
+ gl_moor:function(p){return 'Sandar di '+p}, gl_atlast:function(p){return 'Masih di '+p}, gl_wait:function(p){return 'Labuh jangkar dekat '+p}, gl_sail:function(a,b,p){return a+' ke '+b+', '+p+'% perjalanan'},
+ count:function(n){return n+' kapal, urut ETA Jakarta'},
+ notes:['ETA Jakarta: untuk kapal yang sudah berlayar ke Jakarta dipakai ETA AIS (diisi kru kapal), selain itu dipakai ETA dari email agen.',
+  'Keterlambatan dihitung dari kolom DLY(A) pada email coastal schedule, yaitu selisih terhadap fix schedule (proforma). Batas peringatan 6 jam.',
+  'MarineTraffic versi gratis tidak menampilkan koordinat. Posisi ditampilkan sebagai perairan, status navigasi, kecepatan, dan arah.',
+  'ETD last port adalah waktu keberangkatan aktual (ATD) dari pelabuhan terakhir menurut AIS, dikonversi ke WIB.',
+  'Jadwal bisa berubah. Data ini alat bantu koordinasi, bukan pengganti konfirmasi resmi agen atau terminal.',
+  'Catatan agen (note) ditampilkan apa adanya sesuai email dan tidak diterjemahkan.'],
+ chipWeb:'Web JICT dan Koja', chipWebS:'Jadwal berthing dan closing',
+ chipAis:'AIS MarineTraffic', chipAisS:'Posisi, ETD last port, ETA next port',
+ chipMail:'Email agen (coastal schedule)', chipMailS:'ETA dan ETB Jakarta, keterlambatan',
+ chipMode:'Mode data', modeLive:'Database langsung', modeSnap:'Snapshot publikasi',
+ modeLiveS:'Memperbarui otomatis saat data berubah', modeSnapS:'Buka sebagai pengguna terdaftar untuk data langsung',
+ k_tracked:'kapal dipantau', k_jkt:'sedang menuju Jakarta', k_fastest:function(n){return 'tercepat: '+n},
+ k_next:'ke kedatangan berikutnya', k_late:'terlambat > 6 jam', k_lateS:'dari fix schedule (kolom DLY email)', k_alerts:'peringatan aktif', k_alertsS:'lihat daftar di bawah',
+ due:'tiba', etaAis:'ETA AIS', atd:'ATD', etaW:'ETA',
+ d_pos:'Posisi AIS', d_spd:'Kecepatan, arah', d_mail:'ETA email agen', d_etb:'ETB email', d_berth:function(t){return 'Berthing web '+t}, d_etd:'ETD web', d_oldEta:'ETA web (lama)', d_closing:'Closing time',
+ aisRecv:function(a){return 'Posisi AIS diterima '+a+'.'}, agentNote:function(n){return ' Catatan agen: '+n+'.'},
+ noNear:'Tidak ada kapal yang sedang menuju Jakarta.', noAlert:'Tidak ada peringatan.',
+ now:'sekarang', tlAria:'Timeline ETA dan ETB kapal ke Jakarta', ttBerth:'Berthing web', ttMail:'ETA email', ttAis:'ETA AIS',
+ st_jkt:'Menuju Jakarta', st_wait:'Labuh jangkar, terlambat', st_moor:function(p){return 'Sandar di '+p}, st_sail:function(p){return 'Berlayar ke '+p},
+ arrived:'Tiba', noWeb:'Belum tercantum di web', basis:'dasar: ', basisAIS:'AIS', basisMail:'Email', onTime:'tepat waktu', noCause:'penyebab belum ada konfirmasi', cong:function(p){return 'Kongesti pelabuhan ('+p+')'},
+ dur:function(d,h){return d>0?d+' hari '+h+' jam':h+' jam'}, durMin:function(h,m){return h+'j '+m+'m'},
+ ago:function(n,u){return n+({m:' mnt lalu',h:' jam lalu',d:' hari lalu'})[u]}, agoSfx:' lalu',
+ tg:{last:'LAST PORT',web:'WEB LAMA',src:'BEDA SUMBER',etb:'BEDA ETB',clo:'CLOSING',ais:'AIS LAMA',mail:'EMAIL LAMA'},
+ a_last:function(n,st,ar,d,pt,eta,lp,atd){return '<b>'+n+'</b> masih '+st+' di '+ar+', '+d+' melewati ETA '+pt+' ('+eta+'). Berangkat dari '+lp+' '+atd+'.'},
+ a_web:function(n,tm,te,ae){return '<b>'+n+'</b>: web '+tm+' masih menulis ETA '+te+', padahal kapal belum tiba. AIS memperkirakan '+ae+'.'},
+ a_src:function(n,e,a,d){return '<b>'+n+'</b>: ETA email '+e+' vs AIS '+a+' (selisih '+d+'). Email agen perlu dikonfirmasi.'},
+ a_etb:function(n,tm,w,e,d){return '<b>'+n+'</b>: berthing web '+tm+' '+w+' vs ETB email '+e+' (selisih '+d+').'},
+ a_clo:function(n,tm,c,a){return '<b>'+n+'</b>: closing time '+tm+' ('+c+') lebih awal dari ETA AIS ('+a+'). Cek apakah terminal sudah memperbarui.'},
+ a_ais:function(n,a){return '<b>'+n+'</b>: posisi AIS terakhir '+a+'. Kapal mungkin di luar jangkauan penerima.'},
+ a_mail:function(t,d){return '<b>Email jadwal agen</b> terakhir dibaca '+t+' ('+d+' lalu). ETA ke Jakarta untuk kapal yang belum berlayar bisa sudah berubah.'}
+},
+en:{
+ eyebrow:'Vessel Operations · SKR and HAL · Jakarta', lang_aria:'Language',
+ h_near:'Arriving at Jakarta soon', h_near_s:'vessels already sailing to IDJKT, ETA from AIS',
+ h_alert:'Needs attention', h_alert_s:'computed automatically by comparing sources',
+ h_tl:'ETA and ETB timeline', h_tl_s:'next 3 weeks, WIB time',
+ lg_mail:'Agent email ETA', lg_ais:'AIS ETA', lg_berth:'Terminal website berthing', lg_range:'Email ETA to ETB',
+ h_all:'All vessels', f_all:'All', filter_aria:'Operator filter', search_lbl:'Search vessels', search_ph:'Search vessel or service',
+ th_vessel:'Vessel', th_ais:'AIS position', th_atd:'Last port ETD', th_next:'Next port ETA', th_jkt:'Jakarta ETA', th_etb:'ETB (email)', th_web:'Terminal website', th_delay:'Delay', th_status:'Status',
+ h_notes:'Source notes',
+ gl_h:'4D vessel globe', gl_h_s:'3D with a time axis, estimated positions from route and schedule', gl_reset:'Reset view', gl_play:'Play', gl_pause:'Pause', gl_now:'Now', gl_time:'Time (drag to see past positions and forecast)',
+ gl_lg_wait:'At anchor, delayed', gl_spin:'Auto-rotate', gl_lg_act:'Actual AIS', gl_actual:function(s,a){return 'Actual AIS position ('+s+', '+a+')'}, gl_lg_port:'Port', gl_hint:'Drag to rotate the globe, use the mouse wheel or +/− buttons to zoom, click a vessel to select it.',
+ gl_note:'Markers with a green ring use actual AIS coordinates from a public source (source and data age are shown in the list). Other vessels are estimates from the sailing route, last-port ATD and next-port ETA. Free MarineTraffic locks coordinates, so compare with the AIS sea area in the list. The coastline is simplified and covers Asia-Pacific only.',
+ gl_aria:'3D globe with estimated positions of SKR and HAL vessels', gl_ais:'AIS', gl_unk:'Position cannot be estimated yet',
+ gl_moor:function(p){return 'Moored at '+p}, gl_atlast:function(p){return 'Still at '+p}, gl_wait:function(p){return 'At anchor near '+p}, gl_sail:function(a,b,p){return a+' to '+b+', '+p+'% of the leg'},
+ count:function(n){return n+(n===1?' vessel':' vessels')+', sorted by Jakarta ETA'},
+ notes:['Jakarta ETA: for vessels already sailing to Jakarta the AIS ETA (entered by the ship crew) is used; otherwise the ETA from the agent email.',
+  'Delay is taken from the DLY(A) column of the coastal schedule email, i.e. the gap against the fix (proforma) schedule. The alert threshold is 6 hours.',
+  'The free MarineTraffic version does not show coordinates. Position is shown as sea area, navigational status, speed and course.',
+  'Last port ETD is the actual departure time (ATD) from the last port according to AIS, converted to WIB.',
+  'Schedules can change. This data is a coordination aid, not a replacement for official confirmation from the agent or terminal.',
+  'Agent notes are shown exactly as written in the email and are not translated.'],
+ chipWeb:'JICT and Koja website', chipWebS:'Berthing and closing schedule',
+ chipAis:'AIS MarineTraffic', chipAisS:'Position, last-port ETD, next-port ETA',
+ chipMail:'Agent email (coastal schedule)', chipMailS:'Jakarta ETA and ETB, delay',
+ chipMode:'Data mode', modeLive:'Live database', modeSnap:'Published snapshot',
+ modeLiveS:'Updates automatically when data changes', modeSnapS:'Open as a signed-in user to see live data',
+ k_tracked:'vessels tracked', k_jkt:'heading to Jakarta', k_fastest:function(n){return 'earliest: '+n},
+ k_next:'to next arrival', k_late:'late by > 6 h', k_lateS:'vs fix schedule (email DLY column)', k_alerts:'active alerts', k_alertsS:'see list below',
+ due:'due', etaAis:'AIS ETA', atd:'ATD', etaW:'ETA',
+ d_pos:'AIS position', d_spd:'Speed, course', d_mail:'Agent email ETA', d_etb:'Email ETB', d_berth:function(t){return t+' website berthing'}, d_etd:'Website ETD', d_oldEta:'Website ETA (old)', d_closing:'Closing time',
+ aisRecv:function(a){return 'AIS position received '+a+'.'}, agentNote:function(n){return ' Agent note: '+n+'.'},
+ noNear:'No vessels are currently heading to Jakarta.', noAlert:'No alerts.',
+ now:'now', tlAria:'Timeline of vessel ETA and ETB at Jakarta', ttBerth:'Website berthing', ttMail:'Email ETA', ttAis:'AIS ETA',
+ st_jkt:'Heading to Jakarta', st_wait:'At anchor, delayed', st_moor:function(p){return 'Moored at '+p}, st_sail:function(p){return 'Sailing to '+p},
+ arrived:'Arrived', noWeb:'Not listed on the website yet', basis:'basis: ', basisAIS:'AIS', basisMail:'Email', onTime:'on time', noCause:'cause not confirmed', cong:function(p){return 'Port congestion ('+p+')'},
+ dur:function(d,h){return d>0?d+' d '+h+' h':h+' h'}, durMin:function(h,m){return h+'h '+m+'m'},
+ ago:function(n,u){return n+({m:' min ago',h:' h ago',d:' d ago'})[u]}, agoSfx:' ago',
+ tg:{last:'LAST PORT',web:'STALE WEB',src:'SOURCE GAP',etb:'ETB GAP',clo:'CLOSING',ais:'STALE AIS',mail:'STALE EMAIL'},
+ a_last:function(n,st,ar,d,pt,eta,lp,atd){return '<b>'+n+'</b> is still '+st+' in '+ar+', '+d+' past the ETA at '+pt+' ('+eta+'). Departed '+lp+' '+atd+'.'},
+ a_web:function(n,tm,te,ae){return '<b>'+n+'</b>: the '+tm+' website still shows ETA '+te+', but the vessel has not arrived. AIS estimates '+ae+'.'},
+ a_src:function(n,e,a,d){return '<b>'+n+'</b>: email ETA '+e+' vs AIS '+a+' (gap '+d+'). Confirm with the agent.'},
+ a_etb:function(n,tm,w,e,d){return '<b>'+n+'</b>: '+tm+' website berthing '+w+' vs email ETB '+e+' (gap '+d+').'},
+ a_clo:function(n,tm,c,a){return '<b>'+n+'</b>: '+tm+' closing time ('+c+') is earlier than the AIS ETA ('+a+'). Check whether the terminal has updated.'},
+ a_ais:function(n,a){return '<b>'+n+'</b>: last AIS position '+a+'. The vessel may be out of receiver range.'},
+ a_mail:function(t,d){return '<b>Agent schedule email</b> last read '+t+' ('+d+' ago). Jakarta ETAs for vessels not yet sailing may have changed.'}
+},
+ko:{
+ eyebrow:'선박 운영 · SKR·HAL · 자카르타', lang_aria:'언어',
+ h_near:'자카르타 입항 임박', h_near_s:'IDJKT로 항해 중인 선박, ETA는 AIS 기준',
+ h_alert:'주의 필요', h_alert_s:'출처 간 비교로 자동 계산',
+ h_tl:'ETA·ETB 타임라인', h_tl_s:'향후 3주, WIB 기준',
+ lg_mail:'대리점 이메일 ETA', lg_ais:'AIS ETA', lg_berth:'터미널 웹 접안(Berthing)', lg_range:'이메일 ETA~ETB',
+ h_all:'전체 선박', f_all:'전체', filter_aria:'운영사 필터', search_lbl:'선박 검색', search_ph:'선박 또는 서비스 검색',
+ th_vessel:'선박', th_ais:'AIS 위치', th_atd:'직전 항구 ETD', th_next:'다음 항구 ETA', th_jkt:'자카르타 ETA', th_etb:'ETB (이메일)', th_web:'터미널 웹', th_delay:'지연', th_status:'상태',
+ h_notes:'출처 안내',
+ gl_h:'4D 선박 글로브', gl_h_s:'시간축이 있는 3D, 항로와 일정 기반 추정 위치', gl_reset:'보기 초기화', gl_play:'재생', gl_pause:'일시정지', gl_now:'현재', gl_time:'시간 (슬라이더로 과거 위치와 예상 위치 확인)',
+ gl_lg_wait:'정박 중, 지연', gl_spin:'자동 회전', gl_lg_act:'실제 AIS', gl_actual:function(s,a){return '실제 AIS 위치 ('+s+', '+a+')'}, gl_lg_port:'항구', gl_hint:'드래그하여 글로브를 회전하고, 마우스 휠 또는 +/− 버튼으로 확대·축소하며, 선박을 클릭하여 선택합니다.',
+ gl_note:'녹색 링 표시는 공개 출처의 실제 AIS 좌표를 사용합니다(출처와 데이터 경과 시간은 목록에 표시). 그 외 선박은 항로, 직전 항구 ATD, 다음 항구 ETA 기반 추정값입니다. MarineTraffic 무료 버전은 좌표가 잠겨 있으므로 목록의 AIS 해역과 대조하세요. 해안선은 단순화되었으며 아시아-태평양 지역만 포함합니다.',
+ gl_aria:'SKR·HAL 선박 추정 위치 3D 글로브', gl_ais:'AIS', gl_unk:'위치를 아직 추정할 수 없음',
+ gl_moor:function(p){return p+' 접안 중'}, gl_atlast:function(p){return '아직 '+p+'에 있음'}, gl_wait:function(p){return p+' 인근 정박 중'}, gl_sail:function(a,b,p){return a+' → '+b+', 구간의 '+p+'%'},
+ count:function(n){return '선박 '+n+'척, 자카르타 ETA 순'},
+ notes:['자카르타 ETA: 이미 자카르타로 항해 중인 선박은 AIS ETA(선박 승무원 입력)를, 그 외에는 대리점 이메일의 ETA를 사용합니다.',
+  '지연은 코스탈 스케줄 이메일의 DLY(A) 열, 즉 고정(proforma) 스케줄 대비 차이로 계산합니다. 경고 기준은 6시간입니다.',
+  'MarineTraffic 무료 버전은 좌표를 표시하지 않습니다. 위치는 해역, 항해 상태, 속도, 침로로 표시합니다.',
+  '직전 항구 ETD는 AIS 기준 직전 항구의 실제 출항 시각(ATD)이며 WIB로 환산한 값입니다.',
+  '일정은 변경될 수 있습니다. 이 자료는 업무 협조용이며 대리점이나 터미널의 공식 확인을 대체하지 않습니다.',
+  '대리점 메모(note)는 이메일 원문 그대로 표시하며 번역하지 않습니다.'],
+ chipWeb:'JICT·Koja 웹', chipWebS:'접안 및 클로징 일정',
+ chipAis:'AIS MarineTraffic', chipAisS:'위치, 직전 항구 ETD, 다음 항구 ETA',
+ chipMail:'대리점 이메일 (코스탈 스케줄)', chipMailS:'자카르타 ETA·ETB, 지연',
+ chipMode:'데이터 모드', modeLive:'실시간 데이터베이스', modeSnap:'게시 스냅샷',
+ modeLiveS:'데이터 변경 시 자동 갱신', modeSnapS:'실시간 데이터는 로그인 사용자로 열어 확인하세요',
+ k_tracked:'추적 선박', k_jkt:'자카르타 항해 중', k_fastest:function(n){return '가장 빠름: '+n},
+ k_next:'다음 입항까지', k_late:'6시간 초과 지연', k_lateS:'고정 스케줄 대비 (이메일 DLY 열)', k_alerts:'활성 경고', k_alertsS:'아래 목록 참조',
+ due:'도착', etaAis:'AIS ETA', atd:'ATD', etaW:'ETA',
+ d_pos:'AIS 위치', d_spd:'속도·침로', d_mail:'대리점 이메일 ETA', d_etb:'이메일 ETB', d_berth:function(t){return t+' 웹 접안'}, d_etd:'웹 ETD', d_oldEta:'웹 ETA (이전)', d_closing:'클로징 타임',
+ aisRecv:function(a){return 'AIS 위치 수신: '+a+'.'}, agentNote:function(n){return ' 대리점 메모: '+n+'.'},
+ noNear:'현재 자카르타로 향하는 선박이 없습니다.', noAlert:'경고가 없습니다.',
+ now:'지금', tlAria:'자카르타 선박 ETA·ETB 타임라인', ttBerth:'웹 접안', ttMail:'이메일 ETA', ttAis:'AIS ETA',
+ st_jkt:'자카르타 항해 중', st_wait:'정박 중, 지연', st_moor:function(p){return p+' 접안 중'}, st_sail:function(p){return p+' 항해 중'},
+ arrived:'도착', noWeb:'웹에 아직 없음', basis:'기준: ', basisAIS:'AIS', basisMail:'이메일', onTime:'정시', noCause:'원인 미확인', cong:function(p){return '항만 혼잡 ('+p+')'},
+ dur:function(d,h){return d>0?d+'일 '+h+'시간':h+'시간'}, durMin:function(h,m){return h+'시간 '+m+'분'},
+ ago:function(n,u){return n+({m:'분 전',h:'시간 전',d:'일 전'})[u]}, agoSfx:' 전',
+ tg:{last:'직전 항구',web:'웹 지연',src:'출처 차이',etb:'ETB 차이',clo:'클로징',ais:'AIS 지연',mail:'이메일 지연'},
+ a_last:function(n,st,ar,d,pt,eta,lp,atd){return '<b>'+n+'</b>: '+ar+'에서 여전히 '+st+' 상태이며, '+pt+' ETA('+eta+')를 '+d+' 초과했습니다. '+lp+' 출항 '+atd+'.'},
+ a_web:function(n,tm,te,ae){return '<b>'+n+'</b>: '+tm+' 웹이 아직 ETA '+te+'로 표시하지만 선박은 도착하지 않았습니다. AIS 예상은 '+ae+'입니다.'},
+ a_src:function(n,e,a,d){return '<b>'+n+'</b>: 이메일 ETA '+e+' vs AIS '+a+' (차이 '+d+'). 대리점 확인이 필요합니다.'},
+ a_etb:function(n,tm,w,e,d){return '<b>'+n+'</b>: '+tm+' 웹 접안 '+w+' vs 이메일 ETB '+e+' (차이 '+d+').'},
+ a_clo:function(n,tm,c,a){return '<b>'+n+'</b>: '+tm+' 클로징 타임('+c+')이 AIS ETA('+a+')보다 빠릅니다. 터미널 갱신 여부를 확인하세요.'},
+ a_ais:function(n,a){return '<b>'+n+'</b>: 마지막 AIS 위치 '+a+'. 수신 범위를 벗어났을 수 있습니다.'},
+ a_mail:function(t,d){return '<b>대리점 스케줄 이메일</b>을 마지막으로 읽은 시각 '+t+' ('+d+' 전). 아직 출항하지 않은 선박의 자카르타 ETA가 바뀌었을 수 있습니다.'}
+}};
+var PORT={IDJKT:{ko:'자카르타'},CNSHA:{ko:'상하이'},KRPUS:{ko:'부산'},KRKAN:{ko:'광양'},MYPEN:{ko:'페낭'},HKHKG:{ko:'홍콩'},IDSRG:{ko:'스마랑'},THLCH:{ko:'램차방'},CNCWN:{ko:'츠완'},CNSHK:{ko:'셔코'},KRUSN:{ko:'울산'}};
+var AISST={'Underway using engine':{id:'Berlayar dengan mesin',ko:'기관 항해 중'},'Moored':{id:'Sandar',ko:'접안'},'At anchor':{id:'Labuh jangkar',ko:'정박'}};
+var AREA={'Java Sea':{id:'Laut Jawa',ko:'자바해'},'East China Sea':{id:'Laut Cina Timur',ko:'동중국해'},'South China':{id:'Laut Cina Selatan',ko:'남중국해'},'Gulf of Thailand':{id:'Teluk Thailand',ko:'타이만'},'Perairan Korea':{en:'Korean waters',ko:'한국 해역'},'North China':{id:'Laut Cina Utara',ko:'북중국해'}};
+function tr(map,key,fallback){var m=map[key];return (m&&m[LANG])||fallback}
+function pn(p){return tr(PORT,p.code,p.port)}
+function aisSt(s){return tr(AISST,s,s)}
+function areaT(s){return tr(AREA,s,s)}
+function causeT(c){var m=/^Port congestion \((.*)\)$/.exec(c||'');return m?S.cong(m[1]):(c||'')}
+
+function pickLang(){
+  try{var h=(location.hash||'').replace('#','').toLowerCase();if(LANGS.indexOf(h)>=0)return h}catch(e){}
+  try{var s=localStorage.getItem('etaLang');if(LANGS.indexOf(s)>=0)return s}catch(e){}
+  var n=((navigator.language||'id')+'').slice(0,2).toLowerCase();
+  return n==='ko'?'ko':(n==='en'?'en':'id');
+}
+function applyStatic(){
+  document.documentElement.lang=LANG;
+  document.querySelectorAll('[data-i18n]').forEach(function(el){el.textContent=S[el.getAttribute('data-i18n')]});
+  document.querySelectorAll('[data-i18n-ph]').forEach(function(el){el.setAttribute('placeholder',S[el.getAttribute('data-i18n-ph')])});
+  document.querySelectorAll('[data-i18n-aria]').forEach(function(el){el.setAttribute('aria-label',S[el.getAttribute('data-i18n-aria')])});
+  document.querySelectorAll('.lang button').forEach(function(b){b.setAttribute('aria-pressed',b.getAttribute('data-l')===LANG?'true':'false')});
+  fmtP=new Intl.DateTimeFormat('en-GB',{timeZone:TZ,day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit',hour12:false});
+}
+function setLang(l,save){
+  if(LANGS.indexOf(l)<0)return;
+  LANG=l;S=T[l];
+  if(save){try{localStorage.setItem('etaLang',l)}catch(e){}}
+  applyStatic();renderAll();
+}
+
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
+function ms(s){var d=Date.parse(s);return isNaN(d)?null:d}
+var fmtP=new Intl.DateTimeFormat('en-GB',{timeZone:TZ,day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit',hour12:false});
+function parts(d){var o={};fmtP.formatToParts(new Date(d)).forEach(function(p){o[p.type]=p.value});return o}
+function dt(s){var d=ms(s);if(d==null)return '-';var p=parts(d);return p.day+'/'+p.month+' '+p.hour+':'+p.minute}
+function dur(h){h=Math.abs(h);var d=Math.floor(h/24),hh=Math.round(h-d*24);if(hh===24){d++;hh=0}return S.dur(d,hh)}
+function durMin(m){m=Math.abs(m);var h=Math.floor(m/60),mm=Math.round(m%60);return S.durMin(h,String(mm).padStart(2,'0'))}
+function ago(s,now){var d=ms(s);if(d==null)return '-';var m=(now-d)/60000;return m<60?S.ago(Math.round(m),'m'):(m<2880?S.ago(Math.round(m/60),'h'):S.ago(Math.round(m/1440),'d'))}
+function best(v){return v.phase==='enroute_jkt'?{t:ms(v.next.eta),b:'AIS'}:{t:ms(v.jkt.eta),b:'Email'}}
+function vstatus(v){
+  if(v.phase==='enroute_jkt')return [S.st_jkt,'info'];
+  if(v.phase==='waiting_other')return [S.st_wait,'bad'];
+  if(v.phase==='moored_other')return [S.st_moor(pn(v.next)),'ok'];
+  return [S.st_sail(pn(v.next)),'ok'];
+}
+function alertsFor(now){
+  var A=[],h=36e5;
+  VESSELS.forEach(function(v){
+    var n=esc(v.name+' '+v.voy), tm=esc(v.term.name);
+    var nx=ms(v.next.eta);
+    if(v.phase==='waiting_other'&&nx&&nx<now)
+      A.push({sev:'bad',tag:S.tg.last,txt:S.a_last(n,esc(aisSt(v.ais.status).toLowerCase()),esc(areaT(v.ais.area)),dur((now-nx)/h),esc(pn(v.next)),dt(v.next.eta),esc(pn(v.last)),dt(v.last.atd))});
+    if(v.phase==='enroute_jkt'){
+      var te=ms(v.term.eta);
+      if(te&&te<now)A.push({sev:'warn',tag:S.tg.web,txt:S.a_web(n,tm,dt(v.term.eta),dt(v.next.eta))});
+      var ee=ms(v.jkt.eta),ae=ms(v.next.eta);
+      if(ee&&ae&&Math.abs(ae-ee)>=6*h)A.push({sev:'warn',tag:S.tg.src,txt:S.a_src(n,dt(v.jkt.eta),dt(v.next.eta),dur((ae-ee)/h))});
+      var tb=ms(v.term.berth),eb=ms(v.jkt.etb);
+      if(tb&&eb&&Math.abs(tb-eb)>=6*h)A.push({sev:'info',tag:S.tg.etb,txt:S.a_etb(n,tm,dt(v.term.berth),dt(v.jkt.etb),dur((tb-eb)/h))});
+      var cl=ms(v.term.closing);
+      if(cl&&ae&&cl<ae)A.push({sev:'info',tag:S.tg.clo,txt:S.a_clo(n,tm,dt(v.term.closing),dt(v.next.eta))});
+    }else{
+      var tb2=ms(v.term.berth),eb2=ms(v.jkt.etb);
+      if(tb2&&eb2&&Math.abs(tb2-eb2)>=6*h)A.push({sev:'warn',tag:S.tg.etb,txt:S.a_etb(n,tm,dt(v.term.berth),dt(v.jkt.etb),dur((tb2-eb2)/h))});
+    }
+    var aa=ms(v.ais.at);
+    if(aa&&now-aa>4*h)A.push({sev:'info',tag:S.tg.ais,txt:S.a_ais(n,ago(v.ais.at,now))});
+  });
+  var em=ms(META.emailAt);
+  if(em&&now-em>48*36e5)A.push({sev:'warn',tag:S.tg.mail,txt:S.a_mail(dt(META.emailAt),dur((now-em)/36e5))});
+  var ord={bad:0,warn:1,info:2};A.sort(function(a,b){return ord[a.sev]-ord[b.sev]});
+  return A;
+}
+function renderFresh(now){
+  var st=function(s,h){var a=ms(s);var age=a==null?1e9:(now-a)/36e5;return age<h?'':(age<h*3?' warn':' bad')};
+  var chips=[
+   [S.chipWeb,META.webAt,S.chipWebS,st(META.webAt,2)],
+   [S.chipAis,META.aisAt,S.chipAisS,st(META.aisAt,2)],
+   [S.chipMail,META.emailAt,S.chipMailS,st(META.emailAt,24)]
+  ];
+  document.getElementById('fresh').innerHTML=chips.map(function(c){return '<div class="chip"><b>'+c[0]+'</b><span><i class="dot'+c[3]+'"></i>'+dt(c[1])+' WIB</span><i style="color:var(--muted)">'+c[2]+' · '+ago(c[1],now)+'</i></div>'}).join('')+
+   '<div class="chip"><b>'+S.chipMode+'</b><span><i class="dot'+(LIVE?'':' warn')+'"></i>'+(LIVE?S.modeLive:S.modeSnap)+'</span><i style="color:var(--muted)">'+(LIVE?S.modeLiveS:S.modeSnapS)+'</i></div>';
+}
+function renderKpis(now,A){
+  var jk=VESSELS.filter(function(v){return v.phase==='enroute_jkt'}).sort(function(a,b){return best(a).t-best(b).t});
+  var late=VESSELS.filter(function(v){return v.jkt.delayH>6}).length;
+  var nxt=jk[0];
+  var KC={id:{l:'bongkar muat Jakarta bulan ini',s:function(d,l,t){return 'bongkar '+cN(d)+' · muat '+cN(l)+' box · '+cN(t)+' TEU'}},en:{l:'Jakarta discharge and loading this month',s:function(d,l,t){return 'discharge '+cN(d)+' · loading '+cN(l)+' boxes · '+cN(t)+' TEU'}}}[LANG]||{l:'Jakarta discharge and loading this month',s:function(d,l,t){return 'discharge '+cN(d)+' · loading '+cN(l)+' boxes · '+cN(t)+' TEU'}};
+  var mk0=new Intl.DateTimeFormat('en-CA',{timeZone:TZ,year:'numeric',month:'2-digit'}).format(new Date()).replace('/','-');
+  var CG=cAgg(CARGO.filter(function(d){return d.status==='selesai'&&d.month===mk0}));
+  var k=[
+   [VESSELS.length,S.k_tracked,'SKR '+VESSELS.filter(function(v){return v.op==='SKR'}).length+' · HAL '+VESSELS.filter(function(v){return v.op==='HAL'}).length,'','sec-all'],
+   [jk.length,S.k_jkt,nxt?S.k_fastest(nxt.name):'','','sec-near'],
+   [nxt?durMin((best(nxt).t-now)/60000):'-',S.k_next,nxt?nxt.name+' · '+dt(new Date(best(nxt).t).toISOString()):'','hot',nxt?'v-'+nxt.id:'sec-near'],
+   [late,S.k_late,S.k_lateS,'','sec-all'],
+   [cN(CG.disc+CG.load),KC.l,KC.s(CG.disc,CG.load,CG.teu+CG.lteu),'','sec-cargo'],
+   [A.filter(function(a){return a.sev!=='info'}).length,S.k_alerts,S.k_alertsS,'hot','sec-alerts']
+  ];
+  document.getElementById('kpis').innerHTML=k.map(function(x){return '<a class="kpi '+x[3]+'" href="#'+x[4]+'" data-go="'+x[4]+'"><div class="num mono">'+esc(x[0])+'</div>'+esc(x[1])+'<small>'+esc(x[2])+'</small></a>'}).join('');
+}
+function renderNear(now){
+  var jk=VESSELS.filter(function(v){return v.phase==='enroute_jkt'}).sort(function(a,b){return best(a).t-best(b).t});
+  document.getElementById('near').innerHTML=jk.length?jk.map(function(v){
+    var a=ms(v.last.atd),e=ms(v.next.eta),pct=(a&&e)?Math.max(2,Math.min(98,(now-a)/(e-a)*100)):50;
+    var left=(e-now)/60000;
+    return '<article class="vcard" id="v-'+esc(v.id)+'"><div class="vhead"><div><div class="vname">'+esc(v.name)+'</div><div class="vsub">'+esc(v.voy)+' · '+esc(v.svc)+' · '+esc(v.op)+' · '+esc(v.term.name)+'</div></div>'+
+     '<div class="eta-big"><div class="num mono">'+(left>0?durMin(left):S.due)+'</div><small>'+S.etaAis+' '+dt(v.next.eta)+'</small></div></div>'+
+     '<div class="route"><div class="bar"><i style="width:'+pct.toFixed(1)+'%"></i><em style="left:'+pct.toFixed(1)+'%"></em></div>'+
+     '<div class="ends"><span><b>'+esc(pn(v.last))+'</b> '+S.atd+' '+dt(v.last.atd)+'</span><span><b>'+esc(pn(v.next))+'</b> '+S.etaW+' '+dt(v.next.eta)+'</span></div></div>'+
+     '<dl><div><dt>'+S.d_pos+'</dt><dd>'+esc(areaT(v.ais.area))+'</dd></div><div><dt>'+S.d_spd+'</dt><dd>'+esc(v.ais.speed)+' kn · '+esc(v.ais.course)+'°</dd></div>'+
+     '<div><dt>'+S.d_mail+'</dt><dd>'+dt(v.jkt.eta)+'</dd></div><div><dt>'+S.d_etb+'</dt><dd>'+dt(v.jkt.etb)+'</dd></div>'+
+     '<div><dt>'+esc(S.d_berth(v.term.name))+'</dt><dd>'+dt(v.term.berth)+'</dd></div><div><dt>'+S.d_etd+'</dt><dd>'+dt(v.term.etd)+'</dd></div>'+
+     '<div><dt>'+S.d_oldEta+'</dt><dd><s>'+dt(v.term.eta)+'</s></dd></div><div><dt>'+S.d_closing+'</dt><dd>'+dt(v.term.closing)+'</dd></div></dl>'+
+     '<div class="vsub">'+S.aisRecv(ago(v.ais.at,now))+(v.jkt.note?esc(S.agentNote(v.jkt.note)):'')+'</div></article>'
+  }).join(''):'<div class="panel">'+S.noNear+'</div>';
+}
+function renderAlerts(A){
+  var lbl={bad:'bad',warn:'',info:'info'};
+  document.getElementById('alerts').innerHTML=A.length?A.map(function(a){return '<div class="alert '+lbl[a.sev]+'"><span class="tag">'+a.tag+'</span><span>'+a.txt+'</span></div>'}).join(''):'<div class="panel">'+S.noAlert+'</div>';
+}
+function renderTimeline(now){
+  var L=VESSELS.slice().sort(function(a,b){return best(a).t-best(b).t});
+  var p=parts(now);
+  var t0=Date.parse('2026-'+p.month+'-'+p.day+'T00:00:00+07:00');
+  var days=23,t1=t0+days*864e5,W=980,L0=150,R0=W-16,rowH=34,top=34,H=top+L.length*rowH+18;
+  var X=function(t){return L0+(t-t0)/(t1-t0)*(R0-L0)};
+  var inR=function(t){return t!=null&&t>=t0&&t<=t1};
+  var s='<svg viewBox="0 0 '+W+' '+H+'" width="100%" role="img" aria-label="'+esc(S.tlAria)+'">';
+  for(var i=0;i<=days;i+=1){
+    var tt=t0+i*864e5,x=X(tt),pp=parts(tt);
+    s+='<line class="grid" x1="'+x+'" x2="'+x+'" y1="'+(top-6)+'" y2="'+(H-14)+'" opacity="'+(i%3?0.35:1)+'"/>';
+    if(i%3===0)s+='<text class="m" x="'+x+'" y="'+(top-14)+'" text-anchor="middle">'+pp.day+'/'+pp.month+'</text>';
+  }
+  if(inR(now))s+='<line class="now" x1="'+X(now)+'" x2="'+X(now)+'" y1="'+(top-8)+'" y2="'+(H-12)+'"/><text x="'+X(now)+'" y="'+(H-2)+'" text-anchor="middle" style="fill:var(--accent);font-weight:600">'+esc(S.now)+'</text>';
+  L.forEach(function(v,i){
+    var y=top+i*rowH+rowH/2;
+    s+='<text x="0" y="'+(y-2)+'" style="font-weight:600">'+esc(v.name)+'</text><text class="m" x="0" y="'+(y+11)+'" style="font-size:10px">'+esc(v.voy)+' · '+esc(v.op)+'</text>';
+    var ee=ms(v.jkt.eta),eb=ms(v.jkt.etb),ae=v.phase==='enroute_jkt'?ms(v.next.eta):null,tb=ms(v.term.berth);
+    if(ee!=null&&eb!=null){var a=Math.max(ee,t0),b=Math.min(eb,t1);if(b>a)s+='<rect x="'+X(a)+'" y="'+(y-3)+'" width="'+Math.max(2,X(b)-X(a))+'" height="6" fill="var(--muted)" opacity=".45"/>'}
+    if(inR(tb))s+='<rect x="'+(X(tb)-5)+'" y="'+(y-5)+'" width="10" height="10" fill="var(--accent)"><title>'+esc(S.ttBerth+' '+v.term.name+' '+dt(v.term.berth))+'</title></rect>';
+    if(inR(ee))s+='<circle cx="'+X(ee)+'" cy="'+y+'" r="5" fill="var(--surface)" stroke="var(--ink)" stroke-width="2"><title>'+esc(S.ttMail+' '+dt(v.jkt.eta))+'</title></circle>';
+    if(inR(ae))s+='<path d="M'+X(ae)+' '+(y-7)+'l7 7-7 7-7-7z" fill="var(--ais)"><title>'+esc(S.ttAis+' '+dt(v.next.eta))+'</title></path>';
+  });
+  s+='</svg>';
+  document.getElementById('tl').innerHTML=s;
+}
+function renderRows(now){
+  var q=QUERY.toLowerCase();
+  var L=VESSELS.filter(function(v){return (FILTER==='ALL'||v.op===FILTER)&&(!q||(v.name+' '+v.voy+' '+v.svc).toLowerCase().indexOf(q)>=0)}).sort(function(a,b){return best(a).t-best(b).t});
+  document.getElementById('count').textContent=S.count(L.length);
+  document.getElementById('rows').innerHTML=L.map(function(v){
+    var st=vstatus(v),bt=best(v),delay=v.jkt.delayH;
+    var next=v.next.arrived?'<span class="pill ok">'+S.arrived+' '+dt(v.next.arrived)+'</span><span class="sub">'+esc(pn(v.next))+'</span>':dt(v.next.eta)+'<span class="sub">'+esc(pn(v.next))+' · AIS</span>';
+    var web=v.term.name?esc(v.term.name)+'<span class="sub">ETA <s>'+dt(v.term.eta)+'</s> · berth '+dt(v.term.berth)+'</span><span class="sub">ETD '+dt(v.term.etd)+'</span>':'<span class="sub">'+S.noWeb+'</span>';
+    return '<tr><td><span class="nm">'+esc(v.name)+'</span><span class="sub">'+esc(v.voy)+' · '+esc(v.svc)+' · '+esc(v.op)+'</span></td>'+
+     '<td>'+esc(aisSt(v.ais.status))+'<span class="sub">'+esc(areaT(v.ais.area))+' · '+esc(v.ais.speed)+' kn · '+ago(v.ais.at,now)+'</span></td>'+
+     '<td class="mono">'+(v.last.atd?dt(v.last.atd):'-')+'<span class="sub" style="font-family:var(--body)">'+esc(pn(v.last))+'</span></td>'+
+     '<td class="mono">'+next+'</td>'+
+     '<td class="mono"><b>'+dt(new Date(bt.t).toISOString())+'</b><span class="sub" style="font-family:var(--body)">'+S.basis+(bt.b==='AIS'?S.basisAIS:S.basisMail)+'</span></td>'+
+     '<td class="mono">'+dt(v.jkt.etb)+'<span class="sub" style="font-family:var(--body)">'+esc(v.jkt.src)+' · '+dt(v.jkt.srcDate)+'</span></td>'+
+     '<td class="mono">'+web+'</td>'+
+     '<td>'+(delay>6?'<span class="pill bad">'+dur(delay)+'</span>':'<span class="pill ok">'+S.onTime+'</span>')+(v.jkt.cause?'<span class="sub">'+esc(causeT(v.jkt.cause))+'</span>':'<span class="sub">'+S.noCause+'</span>')+'</td>'+
+     '<td><span class="pill '+st[1]+'">'+esc(st[0])+'</span></td></tr>';
+  }).join('');
+}
+function renderNotes(){
+  document.getElementById('notes').innerHTML=S.notes.map(function(x){return '<li>'+esc(x)+'</li>'}).join('');
+}
+function renderClock(now){
+  var loc=LOCALE[LANG];
+  var f=new Intl.DateTimeFormat(loc,{timeZone:TZ,hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false}).format(now).replace(/\./g,':');
+  var d=new Intl.DateTimeFormat(loc,{timeZone:TZ,weekday:'long',day:'numeric',month:'long',year:'numeric'}).format(now);
+  document.getElementById('clock').textContent=f;document.getElementById('clockDate').textContent=d+' · WIB';
+}
+function renderAll(){
+  var now=Date.now(),A=alertsFor(now);
+  renderClock(now);renderFresh(now);renderKpis(now,A);renderNear(now);renderAlerts(A);renderTimeline(now);renderRows(now);renderNotes();renderCargo();renderHero();glRender(now);
+}
+document.querySelectorAll('.seg button[data-f]').forEach(function(b){b.addEventListener('click',function(){
+  FILTER=b.getAttribute('data-f');document.querySelectorAll('.seg button[data-f]').forEach(function(x){x.setAttribute('aria-pressed',x===b?'true':'false')});renderRows(Date.now())})});
+document.querySelectorAll('.lang button').forEach(function(b){b.addEventListener('click',function(){setLang(b.getAttribute('data-l'),true)})});
+document.getElementById('q').addEventListener('input',function(e){QUERY=e.target.value;renderRows(Date.now())});
+
+/* ===== Bongkar muat Jakarta (koleksi cargo) ===== */
+var CARGO=[{"id": "shanghai-voyager-2608n", "name": "SHANGHAI VOYAGER", "voy": "2608N", "op": "SKR", "svc": "PCI", "month": "2026-10", "status": "selesai", "berth": "2026-10-07T11:00:00+07:00", "sailing": "2026-10-09T09:00:00+07:00", "discPlan": {"boxes": 1130, "teu": 1606, "lines": {"HAS": [339, 461], "SKR": [471, 688], "JJS": [298, 427], "EMC": [22, 30]}}, "discActual": 1139, "load": 625, "loadTeu": 961, "src": "DISCH & R.O.B LIST FINAL; FINAL LOADING - EXCEPTION LIST; xlsx FINAL LOADING LIST (muat per operator)", "note": "Muat per operator dari xlsx (625 box). Badan email FINAL LOADING menyebut 624 box, selisih 1 box belum dicek.", "ops": {"HAS": {"discBox": 339, "discTeu": 461, "loadBox": 161, "loadTeu": 239}, "SKR": {"discBox": 471, "discTeu": 688, "loadBox": 212, "loadTeu": 324}, "JJS": {"discBox": 298, "discTeu": 427, "loadBox": 242, "loadTeu": 386}, "EMC": {"discBox": 22, "discTeu": 30, "loadBox": 10, "loadTeu": 12}}, "loadEmail": 624}, {"id": "sawasdee-rigel-2609n", "name": "SAWASDEE RIGEL", "voy": "2609N", "op": "SKR", "svc": "PCI2", "month": "2026-10", "status": "selesai", "berth": "2026-10-07T01:42:00+07:00", "sailing": "2026-10-08T05:23:00+07:00", "discPlan": {"boxes": 642, "teu": 922, "lines": {"HAS": [341, 478], "SKR": [301, 444]}}, "discActual": 652, "load": 634, "loadTeu": 809, "src": "DISCH & R.O.B LIST FINAL; FINAL LOADING - EXCEPTION LIST; xlsx FINAL LOADING LIST (muat per operator)", "note": "Bongkar per operator memakai angka rencana DISCH & R.O.B LIST.", "ops": {"HAS": {"discBox": 341, "discTeu": 478, "loadBox": 290, "loadTeu": 395}, "SKR": {"discBox": 301, "discTeu": 444, "loadBox": 344, "loadTeu": 414}}, "loadEmail": 634}, {"id": "sawasdee-vega-2612n", "name": "SAWASDEE VEGA", "voy": "2612N", "op": "SKR", "svc": "PCI2", "month": "2026-09", "status": "selesai", "berth": "2026-09-30T00:00:00+07:00", "sailing": "2026-10-01T08:37:00+07:00", "discPlan": {"boxes": 790, "teu": 1180, "lines": {"HAS": [390, 561], "SKR": [400, 619]}}, "discActual": 790, "load": 662, "loadTeu": 871, "src": "DISCH & R.O.B LIST FINAL; FINAL LOADING - EXCEPTION LIST; xlsx FINAL LOADING LIST (muat per operator)", "note": "Sandar 30 Sep, dihitung ke September berdasarkan tanggal sandar. Jam sandar tidak tercatat.", "ops": {"HAS": {"discBox": 390, "discTeu": 561, "loadBox": 332, "loadTeu": 446}, "SKR": {"discBox": 400, "discTeu": 619, "loadBox": 330, "loadTeu": 425}}, "loadEmail": 662}, {"id": "hochiminh-voyager-2609s", "name": "HOCHIMINH VOYAGER", "voy": "2609S", "op": "SKR", "svc": "PCI2", "month": "2026-10", "status": "rencana", "berth": null, "sailing": null, "discPlan": {"boxes": 1120, "teu": 1614, "lines": {"HAS": [543, 766], "SKR": [577, 848]}}, "discActual": null, "load": null, "loadTeu": null, "src": "DISCH & R.O.B LIST (rencana)", "note": "Rencana bongkar kapal yang akan tiba sekitar 15 Okt. Belum dihitung."}], CMONTH='2026-10';
+var CT={
+id:{h:'Bongkar muat di Jakarta',hs:'dari DISCH & R.O.B LIST dan FINAL LOADING, box dan TEU, per service dan per operator',basis:'Dihitung per tanggal sandar. Hanya kapal yang sudah selesai.',
+ k_disc:'Total bongkar',k_discS:'box aktual',k_teu:'Bongkar TEU',k_teuS:'TEU menurut rencana bongkar',k_load:'Total muat',k_loadS:'box',k_lteu:'Muat TEU',k_lteuS:'TEU dari xlsx FINAL LOADING',k_ves:'Kapal selesai',k_vesS:'kapal sandar',
+ h_svc:'Ringkasan per service',h_op:'Perbandingan operator, semua service',h_v:'Per kapal',
+ svc:'Service',op:'Operator',ves:'Kapal',disc:'Bongkar (box)',teu:'Bongkar (TEU)',load:'Muat (box)',lteu:'Muat (TEU)',move:'Total gerak (box)',share:'Pangsa',
+ vessel:'Kapal',vop:'Op. kapal',berth:'Sandar',sail:'Berangkat',plan:'Rencana (box)',act:'Aktual (box)',diff:'Selisih',total:'Total',
+ sDisc:'Bongkar',sLoad:'Muat',unit:'box',
+ svcH:function(s,n){return 'Service '+s+' · '+n+' kapal'},
+ empty:function(s){return 'Belum ada kapal service '+s+' yang selesai bulan ini. Operator di bawah tetap ditampilkan dengan angka 0.'},
+ dys:'termasuk DYS',
+ planTxt:function(l){return 'Rencana bongkar belum dihitung: '+l},
+ none:'Belum ada kapal selesai bulan ini.',
+ notes:function(m,vega){var a=['Operator adalah operator slot di setiap kapal (kolom OPR di FINAL LOADING dan baris per operator di DISCH & R.O.B LIST). HAS dan HAL digabung, KMD dan KMTC digabung, DYS masuk NAM/NSS.','Bongkar per operator dan TEU bongkar memakai angka rencana DISCH & R.O.B LIST. Box aktual bisa sedikit berbeda dari rencana dan hanya tersedia per kapal.','Muat per operator dihitung dari xlsx FINAL LOADING (baris dengan POL IDJKT). Total muat Shanghai Voyager 625 box, sedangkan email menyebut 624 box.'];
+  if(vega&&m==='2026-10')a.push('SAWASDEE VEGA 2612N sandar 30 Sep dan berangkat 1 Okt, jadi dihitung ke September. Lihat tab September.');
+  return a}},
+en:{h:'Jakarta discharge and loading',hs:'from DISCH & R.O.B LIST and FINAL LOADING, boxes and TEU, by service and operator',basis:'Counted by berthing date. Completed calls only.',
+ k_disc:'Total discharge',k_discS:'boxes, actual',k_teu:'Discharge TEU',k_teuS:'TEU per discharge plan',k_load:'Total loading',k_loadS:'boxes',k_lteu:'Loading TEU',k_lteuS:'TEU from FINAL LOADING xlsx',k_ves:'Completed calls',k_vesS:'vessels berthed',
+ h_svc:'Service summary',h_op:'Operator comparison, all services',h_v:'By vessel',
+ svc:'Service',op:'Operator',ves:'Vessels',disc:'Discharge (box)',teu:'Discharge (TEU)',load:'Loading (box)',lteu:'Loading (TEU)',move:'Total moves (box)',share:'Share',
+ vessel:'Vessel',vop:'Vessel op.',berth:'Berthed',sail:'Sailed',plan:'Plan (box)',act:'Actual (box)',diff:'Diff',total:'Total',
+ sDisc:'Discharge',sLoad:'Loading',unit:'box',
+ svcH:function(s,n){return 'Service '+s+' · '+n+' vessels'},
+ empty:function(s){return 'No completed '+s+' calls this month. Operators are listed below with 0.'},
+ dys:'incl. DYS',
+ planTxt:function(l){return 'Planned discharge not counted yet: '+l},
+ none:'No completed calls this month.',
+ notes:function(m,vega){var a=['Operators are the slot operators on each vessel (OPR column in FINAL LOADING and the per-operator lines in the DISCH & R.O.B LIST). HAS and HAL are combined, KMD and KMTC are combined, DYS counts under NAM/NSS.','Per-operator discharge and discharge TEU use the plan figures from the DISCH & R.O.B LIST. Actual boxes can differ slightly and exist only per vessel.','Per-operator loading is counted from the FINAL LOADING xlsx (rows with POL IDJKT). Shanghai Voyager loading is 625 boxes there, while the email says 624.'];
+  if(vega&&m==='2026-10')a.push('SAWASDEE VEGA 2612N berthed 30 Sep and sailed 1 Oct, so it counts in September.');
+  return a}}
+};
+var SVC_OPS={PCI:['HAS/HAL','SKR','JJS','EMC'],PCI2:['HAS/HAL','SKR'],ANX:['KMD/KMTC','SKR','HAS/HAL','NAM/NSS']};
+var OPG={HAS:'HAS/HAL',HAL:'HAS/HAL',KMD:'KMD/KMTC',KMT:'KMD/KMTC',KMTC:'KMD/KMTC',NAM:'NAM/NSS',NSS:'NAM/NSS',DYS:'NAM/NSS'};
+function opGrp(c){return OPG[c]||c}
+function cN(n){return n==null?'–':new Intl.NumberFormat(LOCALE[LANG]).format(n)}
+function cDT(s){if(!s)return '–';var d=Date.parse(s);if(isNaN(d))return '–';return new Intl.DateTimeFormat('en-GB',{timeZone:TZ,day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit',hour12:false}).format(d)}
+function cAgg(l){var o={n:l.length,disc:0,teu:0,load:0,lteu:0};l.forEach(function(d){o.disc+=d.discActual||0;o.teu+=(d.discPlan&&d.discPlan.teu)||0;o.load+=d.load||0;o.lteu+=d.loadTeu||0});return o}
+function cOps(l,order){
+  var m={},dys=false;(order||[]).forEach(function(k){m[k]={name:k,db:0,dt:0,lb:0,lt:0}});
+  l.forEach(function(d){Object.keys(d.ops||{}).forEach(function(c){var g=opGrp(c),v=d.ops[c];if(!m[g])m[g]={name:g,db:0,dt:0,lb:0,lt:0};if(c==='DYS')dys=true;m[g].db+=v.discBox||0;m[g].dt+=v.discTeu||0;m[g].lb+=v.loadBox||0;m[g].lt+=v.loadTeu||0})});
+  var a=Object.keys(m).map(function(k){return m[k]});a.dys=dys;return a;
+}
+function cLabel(C,r,dys){return r.name==='NAM/NSS'?'NAM/NSS <span class="vsub">('+esc(C.dys)+')</span>':esc(r.name)}
+function cChart(C,rows){
+  var mx=1;rows.forEach(function(r){mx=Math.max(mx,r.db,r.lb)});
+  var W=640,L=96,R=64,bh=14,gap=4,pad=14,rh=bh*2+gap+pad,H=rows.length*rh+8,sc=(W-L-R)/mx,o='';
+  rows.forEach(function(r,i){var y=4+i*rh;
+    o+='<text x="'+(L-10)+'" y="'+(y+bh+gap/2+4)+'" text-anchor="end" style="font-weight:600">'+esc(r.name)+'</text>';
+    [[r.db,'var(--ais)',C.sDisc],[r.lb,'var(--accent)',C.sLoad]].forEach(function(s,j){var yy=y+j*(bh+gap),w=Math.max(s[0]*sc,s[0]>0?2:0);
+      o+='<rect x="'+L+'" y="'+yy+'" width="'+w+'" height="'+bh+'" rx="3" style="fill:'+s[1]+'"><title>'+esc(r.name+' · '+s[2]+': '+cN(s[0])+' '+C.unit)+'</title></rect>';
+      o+='<text x="'+(L+w+6)+'" y="'+(yy+bh-3)+'" class="m" style="font-family:var(--mono)">'+cN(s[0])+'</text>'});
+  });
+  return '<div class="legend"><span><i class="dot" style="background:var(--ais)"></i>'+esc(C.sDisc)+' ('+esc(C.unit)+')</span><span><i class="dot" style="background:var(--accent)"></i>'+esc(C.sLoad)+' ('+esc(C.unit)+')</span></div><svg viewBox="0 0 '+W+' '+H+'" width="100%" role="img" aria-label="'+esc(C.h)+'" style="max-width:720px;display:block;margin-top:6px">'+o+'</svg>';
+}
+function cHead(a){return '<thead><tr>'+a.map(function(x,i){return '<th'+(i?' class="n"':'')+'>'+esc(x)+'</th>'}).join('')+'</tr></thead>'}
+function cRow(a,cls){return '<tr'+(cls?' class="'+cls+'"':'')+'>'+a.map(function(x,i){return '<td'+(i?' class="n"':'')+'>'+x+'</td>'}).join('')+'</tr>'}
+function cOpTable(C,rows){
+  var T0={db:0,dt:0,lb:0,lt:0};rows.forEach(function(r){T0.db+=r.db;T0.dt+=r.dt;T0.lb+=r.lb;T0.lt+=r.lt});var mv=T0.db+T0.lb;
+  return '<table class="cg-t">'+cHead([C.op,C.disc,C.teu,C.load,C.lteu,C.move,C.share])+'<tbody>'+rows.map(function(r){var m=r.db+r.lb;return cRow(['<span class="nm">'+cLabel(C,r)+'</span>',cN(r.db),cN(r.dt),cN(r.lb),cN(r.lt),cN(m),mv?Math.round(m/mv*100)+'%':'–'])}).join('')+cRow([esc(C.total),cN(T0.db),cN(T0.dt),cN(T0.lb),cN(T0.lt),cN(mv),mv?'100%':'–'],'tot')+'</tbody></table>';
+}
+function renderCargo(){
+  var C=CT[LANG]||CT.en;
+  var set=function(id,t){var e=document.getElementById(id);if(e)e.textContent=t};
+  set('cg-h',C.h);set('cg-hs',C.hs);set('cg-basis',C.basis);set('cg-h-svc',C.h_svc);set('cg-h-op',C.h_op);set('cg-h-v',C.h_v);
+  var done=CARGO.filter(function(d){return d.status==='selesai'});
+  var ms_=['2026-10'];CARGO.forEach(function(d){if(ms_.indexOf(d.month)<0)ms_.push(d.month)});ms_.sort().reverse();
+  var mf=new Intl.DateTimeFormat(LOCALE[LANG],{timeZone:TZ,month:'long',year:'numeric'});
+  document.getElementById('cg-months').innerHTML=ms_.map(function(m){return '<button type="button" data-m="'+esc(m)+'" aria-pressed="'+(m===CMONTH?'true':'false')+'">'+esc(mf.format(new Date(m+'-15T12:00:00+07:00')))+'</button>'}).join('');
+  var L=done.filter(function(d){return d.month===CMONTH}),A=cAgg(L);
+  document.getElementById('cg-kpis').innerHTML=[[A.disc,C.k_disc,C.k_discS],[A.teu,C.k_teu,C.k_teuS],[A.load,C.k_load,C.k_loadS],[A.lteu,C.k_lteu,C.k_lteuS],[A.n,C.k_ves,C.k_vesS]].map(function(k){return '<div class="cg-k"><span>'+esc(k[1])+'</span><b>'+cN(k[0])+'</b><i>'+esc(k[2])+'</i></div>'}).join('');
+  var svcs=['PCI','PCI2','ANX'];L.forEach(function(d){if(svcs.indexOf(d.svc)<0)svcs.push(d.svc)});
+  document.getElementById('cg-svc').innerHTML='<table class="cg-t">'+cHead([C.svc,C.ves,C.disc,C.teu,C.load,C.lteu])+'<tbody>'+svcs.map(function(s){var a=cAgg(L.filter(function(d){return d.svc===s}));return cRow(['<span class="nm">'+esc(s)+'</span>',cN(a.n),cN(a.disc),cN(a.teu),cN(a.load),cN(a.lteu)])}).join('')+cRow([esc(C.total),cN(A.n),cN(A.disc),cN(A.teu),cN(A.load),cN(A.lteu)],'tot')+'</tbody></table>';
+  document.getElementById('cg-svcs').innerHTML=svcs.map(function(s){
+    var l=L.filter(function(d){return d.svc===s}),rows=cOps(l,SVC_OPS[s]),any=rows.some(function(r){return r.db||r.lb});
+    return '<div class="panel"><h3 class="cg-h3">'+esc(C.svcH(s,l.length))+'</h3>'+(any?'<div class="cg-grid"><div>'+cChart(C,rows)+'</div><div class="scroll">'+cOpTable(C,rows)+'</div></div>':'<p class="cg-plan" style="margin:0 0 10px">'+esc(C.empty(s))+'</p><div class="scroll">'+cOpTable(C,rows)+'</div>')+'</div>'}).join('');
+  var all=cOps(L,['HAS/HAL','SKR','JJS','EMC','KMD/KMTC','NAM/NSS']);
+  document.getElementById('cg-allch').innerHTML='<div class="cg-grid"><div>'+cChart(C,all)+'</div><div class="scroll">'+cOpTable(C,all)+'</div></div>';
+  var vh=cHead([C.vessel,C.vop,C.svc,C.berth,C.sail,C.plan,C.act,C.diff,C.teu,C.load,C.lteu]);
+  document.getElementById('cg-v').innerHTML=L.length?'<table class="cg-t">'+vh+'<tbody>'+L.slice().sort(function(a,b){return Date.parse(a.berth)-Date.parse(b.berth)}).map(function(d){var df=(d.discActual||0)-d.discPlan.boxes,cls=df===0?'zero':(df>0?'pos':'neg');return cRow(['<span class="nm">'+esc(d.name)+'</span> <span class="vsub">'+esc(d.voy)+'</span>',esc(d.op),esc(d.svc),cDT(d.berth),cDT(d.sailing),cN(d.discPlan.boxes),cN(d.discActual),'<span class="cg-d '+cls+'">'+(df>0?'+':'')+df+'</span>',cN(d.discPlan.teu),cN(d.load),cN(d.loadTeu)])}).join('')+'</tbody></table>':'<p class="cg-plan">'+esc(C.none)+'</p>';
+  var pl=CARGO.filter(function(d){return d.status==='rencana'&&d.month===CMONTH}).map(function(d){return d.name+' '+d.voy+' · '+cN(d.discPlan.boxes)+' box / '+cN(d.discPlan.teu)+' TEU'});
+  set('cg-plan',pl.length?C.planTxt(pl.join('; ')):'');
+  var vega=CARGO.some(function(d){return d.id.indexOf('vega')>=0&&d.month==='2026-09'});
+  document.getElementById('cg-notes').innerHTML=C.notes(CMONTH,vega).map(function(x){return '<li>'+esc(x)+'</li>'}).join('');
+}
+
+/* ===== Hero: ilustrasi dua kapal bersandingan + ringkasan ===== */
+var HT={
+id:{nav:['Hampir tiba','Globe 4D','Perhatian','Bongkar muat','Semua kapal'],cap:'Ilustrasi kapal SINOKOR dan HEUNG-A LINE',aria:'Ilustrasi dua kapal kontainer bersandingan di pelabuhan, bertuliskan SINOKOR dan HEUNG-A LINE',
+ s1:'Kapal dipantau',s1s:function(a,b){return 'SKR '+a+' · HAL '+b},s2:'Tiba di Jakarta berikutnya',s2n:'Belum ada kapal menuju Jakarta',s3:'Bongkar dan muat bulan ini',s3s:function(t){return cN(t)+' TEU bongkar (rencana) · '+cN(arguments[1])+' TEU muat'},s3u:'box'},
+en:{nav:['Arriving soon','4D globe','Alerts','Discharge & loading','All vessels'],cap:'Illustration of SINOKOR and HEUNG-A LINE vessels',aria:'Illustration of two container ships berthed side by side, marked SINOKOR and HEUNG-A LINE',
+ s1:'Vessels tracked',s1s:function(a,b){return 'SKR '+a+' · HAL '+b},s2:'Next arrival in Jakarta',s2n:'No vessel heading to Jakarta',s3:'Discharge and loading this month',s3s:function(t){return cN(t)+' TEU discharge (plan) · '+cN(arguments[1])+' TEU loading'},s3u:'boxes'}
+};
+function heroRnd(seed){var q=seed;return function(){q=(q*16807)%2147483647;return q/2147483647}}
+function heroShip(x,y,w,hh,hull,band,name,seed,delay,fs){
+  var r=heroRnd(seed),id='hc'+seed,bow=34,o='';
+  var hp='M'+x+','+y+' L'+(x+w+18)+','+(y-8)+' L'+(x+w-bow)+','+(y+hh)+' L'+(x+16)+','+(y+hh)+' Z';
+  var pal=['#c8542f','#2f7f8f','#d4a02e','#355f9a','#8a97a3','#a8322b','#3f8f5f','#e4e8eb','#6b4a8a'];
+  var bx=x+w*0.64,bw=58,tier=15,cw=30,cx;
+  o+='<g class="ship" style="animation-delay:'+delay+'s"><defs><clipPath id="'+id+'"><path d="'+hp+'"/></clipPath></defs>';
+  o+='<rect x="'+(x+14)+'" y="'+(y-6)+'" width="'+(w-30)+'" height="8" fill="#0c1a28"/>';
+  for(cx=x+20;cx+cw<x+w-14;cx+=cw+2){
+    if(cx+cw>bx-8&&cx<bx+bw+8)continue;
+    var edge=(cx<x+70||cx>x+w-80)?1:0,n=Math.max(2,3+Math.floor(r()*3)-edge);
+    for(var t=0;t<n;t++){var col=pal[Math.floor(r()*pal.length)];
+      o+='<rect x="'+cx+'" y="'+(y-6-(t+1)*tier)+'" width="'+cw+'" height="'+(tier-1)+'" fill="'+col+'"/><rect x="'+cx+'" y="'+(y-6-(t+1)*tier)+'" width="'+cw+'" height="2.5" fill="#fff" opacity=".18"/>'}
+  }
+  o+='<rect x="'+(bx-30)+'" y="'+(y-62)+'" width="22" height="56" fill="'+band+'"/>';
+  o+='<rect x="'+bx+'" y="'+(y-74)+'" width="'+bw+'" height="68" fill="#eef1f3"/><rect x="'+(bx+8)+'" y="'+(y-92)+'" width="'+(bw-16)+'" height="18" fill="#dfe5e9"/>';
+  for(var k=0;k<4;k++)o+='<rect x="'+(bx+6+k*13)+'" y="'+(y-66+ (k%2)*0)+'" width="9" height="6" fill="#27495f"/><rect x="'+(bx+6+k*13)+'" y="'+(y-52)+'" width="9" height="6" fill="#27495f"/><rect x="'+(bx+6+k*13)+'" y="'+(y-38)+'" width="9" height="6" fill="#27495f"/>';
+  o+='<rect x="'+(bx+12)+'" y="'+(y-88)+'" width="'+(bw-24)+'" height="5" fill="#27495f"/><rect x="'+(bx+bw/2-1)+'" y="'+(y-112)+'" width="2" height="22" fill="#cfd8de"/>';
+  o+='<path d="'+hp+'" fill="'+hull+'"/>';
+  o+='<g clip-path="url(#'+id+')"><rect x="'+x+'" y="'+(y+hh-13)+'" width="'+(w+30)+'" height="14" fill="'+band+'"/><rect x="'+x+'" y="'+y+'" width="'+(w+30)+'" height="4" fill="#eaf0f4" opacity=".85"/><rect x="'+x+'" y="'+(y+4)+'" width="'+(w+30)+'" height="'+(hh-17)+'" fill="url(#hullShade)"/></g>';
+  o+='<text x="'+(x+w*0.46)+'" y="'+(y+hh*0.62)+'" text-anchor="middle" style="fill:#fff;font-family:var(--display);font-weight:700;font-size:'+fs+'px;letter-spacing:.16em">'+name+'</text>';
+  return o+'</g>';
+}
+function heroWave(base,amp,len,col,op,cls,sw){
+  var d='M0,'+base,x;for(x=0;x<=2400;x+=20)d+=' L'+x+','+(base+amp*Math.sin(x/len*6.283)).toFixed(1);
+  return '<path class="'+cls+'" d="'+d+'" fill="none" stroke="'+col+'" stroke-opacity="'+op+'" stroke-width="'+(sw||1.4)+'"/>';
+}
+function heroScene(){
+  var W=1200,H=340,hz=176,r=heroRnd(11),o='';
+  o+='<svg viewBox="0 0 '+W+' '+H+'" width="100%" height="100%" preserveAspectRatio="xMidYMid slice" role="img" aria-label="">';
+  o+='<defs><linearGradient id="hsky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0a1d33"/><stop offset=".55" stop-color="#2d4e72"/><stop offset=".88" stop-color="#e58a54"/><stop offset="1" stop-color="#f5c27a"/></linearGradient>'
+   +'<linearGradient id="hsea" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#27506f"/><stop offset=".45" stop-color="#0e2c46"/><stop offset="1" stop-color="#06172a"/></linearGradient>'
+   +'<linearGradient id="hullShade" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".1"/><stop offset="1" stop-color="#000" stop-opacity=".22"/></linearGradient>'
+   +'<radialGradient id="hsun" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#fff2c9" stop-opacity=".95"/><stop offset=".35" stop-color="#ffc77a" stop-opacity=".5"/><stop offset="1" stop-color="#ff9a52" stop-opacity="0"/></radialGradient></defs>';
+  o+='<rect width="'+W+'" height="'+hz+'" fill="url(#hsky)"/><circle cx="930" cy="'+(hz-6)+'" r="120" fill="url(#hsun)"/><circle cx="930" cy="'+(hz-6)+'" r="30" fill="#ffe6ab"/>';
+  var sx;for(var i=0;i<26;i++){sx=r()*W;o+='<circle cx="'+sx.toFixed(0)+'" cy="'+(r()*70).toFixed(0)+'" r="'+(0.5+r()*0.9).toFixed(1)+'" fill="#fff" opacity="'+(0.25+r()*0.4).toFixed(2)+'"/>'}
+  var bxx=640;while(bxx<860){var bw=14+r()*22,bh=18+r()*46;o+='<rect x="'+bxx.toFixed(0)+'" y="'+(hz-bh-6).toFixed(0)+'" width="'+bw.toFixed(0)+'" height="'+bh.toFixed(0)+'" fill="#16304b" opacity=".9"/>';bxx+=bw+3}
+  [70,205,340,1010,1130].forEach(function(cx,i){var s=0.8+(i%3)*0.12,top=hz-92*s;
+    o+='<g fill="#10253b" opacity=".92"><rect x="'+cx+'" y="'+top+'" width="4" height="'+(92*s)+'"/><rect x="'+(cx+34*s)+'" y="'+top+'" width="4" height="'+(92*s)+'"/><rect x="'+(cx-10)+'" y="'+top+'" width="'+(58*s+20)+'" height="5"/><polygon points="'+(cx-70*s)+','+(top+4)+' '+(cx+2)+','+(top-14*s)+' '+(cx+2)+','+(top+6)+'"/><rect x="'+(cx-70*s)+'" y="'+(top+3)+'" width="'+(70*s+14)+'" height="3"/></g>'});
+  o+='<rect y="'+(hz-8)+'" width="'+W+'" height="14" fill="#0d2033"/>';
+  var qx;for(qx=0;qx<W;qx+=22){if((qx>560&&qx<840))continue;var c=['#7d3b28','#245a6a','#8a6a1f','#2a4a78','#555f69'][Math.floor(r()*5)];o+='<rect x="'+qx+'" y="'+(hz-18)+'" width="20" height="10" fill="'+c+'" opacity=".75"/>'}
+  o+='<rect y="'+hz+'" width="'+W+'" height="'+(H-hz)+'" fill="url(#hsea)"/>';
+  o+='<g opacity=".55">';for(i=0;i<9;i++){o+='<rect x="'+(930-60+r()*120).toFixed(0)+'" y="'+(hz+4+i*10)+'" width="'+(30+r()*70).toFixed(0)+'" height="2" fill="#ffd9a0" opacity="'+(0.7-i*0.07).toFixed(2)+'"/>'}o+='</g>';
+  o+=heroShip(640,206,520,58,'#1d5a58','#7a2f2f','HEUNG-A LINE',33,-1.6,31);
+  o+=heroShip(40,218,590,64,'#11365d','#b8412b','SINOKOR',21,0,36);
+  o+='<g class="wvs">'+heroWave(262,1.6,70,'#cfe8ff',.18,'wv1')+heroWave(282,2.2,90,'#cfe8ff',.14,'wv2')+heroWave(304,2.8,110,'#cfe8ff',.1,'wv1')+'</g>';
+  o+='<rect y="'+(H-70)+'" width="'+W+'" height="70" fill="#041222" opacity=".25"/>';
+  return o+'</svg>';
+}
+function renderHero(){
+  var h=HT[LANG]||HT.en,art=document.getElementById('hero-art');
+  if(art&&!art.firstChild){art.innerHTML=heroScene()}
+  if(art)art.setAttribute('aria-label',h.aria);
+  var cp=document.getElementById('hero-cap');if(cp)cp.textContent=h.cap;
+  var nv=document.querySelectorAll('#jumpnav a');for(var i=0;i<nv.length&&i<h.nav.length;i++)nv[i].textContent=h.nav[i];
+  var skr=VESSELS.filter(function(v){return v.op==='SKR'}).length,hal=VESSELS.filter(function(v){return v.op==='HAL'}).length;
+  var en=VESSELS.filter(function(v){return v.phase==='enroute_jkt'}).sort(function(a,b){return best(a).t-best(b).t})[0];
+  var mk=new Intl.DateTimeFormat('en-CA',{timeZone:TZ,year:'numeric',month:'2-digit'}).format(new Date()).replace('/','-');
+  var L=CARGO.filter(function(d){return d.status==='selesai'&&d.month===mk}),A=cAgg(L);
+  var s2=en?'<b>'+esc(en.name)+'</b><i>'+esc(en.voy+' · '+en.op+' · '+dt(new Date(best(en).t).toISOString())+' WIB')+'</i>':'<b>–</b><i>'+esc(h.s2n)+'</i>';
+  document.getElementById('hero-stats').innerHTML=
+   '<div><span>'+esc(h.s1)+'</span><b>'+VESSELS.length+'</b><i>'+esc(h.s1s(skr,hal))+'</i></div>'+
+   '<div><span>'+esc(h.s2)+'</span>'+s2+'</div>'+
+   '<div><span>'+esc(h.s3)+'</span><b>'+cN(A.disc)+' / '+cN(A.load)+' '+esc(h.s3u)+'</b><i>'+esc(h.s3s(A.teu,A.lteu))+'</i></div>';
+}
+document.getElementById('jumpnav').addEventListener('click',function(e){
+  var a=e.target.closest&&e.target.closest('a[data-go]');if(!a)return;var el=document.getElementById(a.getAttribute('data-go'));if(!el)return;
+  e.preventDefault();var rm=false;try{rm=window.matchMedia('(prefers-reduced-motion: reduce)').matches}catch(x){}
+  el.scrollIntoView({behavior:rm?'auto':'smooth',block:'start'});
+});
+document.getElementById('cg-months').addEventListener('click',function(e){var b=e.target.closest&&e.target.closest('button[data-m]');if(b){CMONTH=b.getAttribute('data-m');renderCargo()}});
+/* ===== Globe 4D: 3D orthografis + waktu. Posisi = estimasi dari rute, ATD dan ETA (bukan koordinat AIS). ===== */
+var LAND=[
+[[66.5,25.4],[68.2,23.7],[70.2,21.0],[72.6,21.2],[72.9,19.0],[73.6,16.5],[74.7,13.0],[76.3,9.8],[77.5,8.1],[78.2,8.9],[79.8,10.3],[80.3,13.3],[80.1,15.8],[82.2,16.8],[84.8,19.2],[86.9,21.0],[88.0,21.7],[89.2,21.8],[91.0,22.5],[92.3,20.8],[93.8,19.0],[94.5,16.2],[95.3,15.8],[97.6,16.6],[97.7,15.0],[98.6,13.0],[98.4,10.0],[98.3,8.3],[99.0,7.2],[100.2,6.5],[100.4,5.3],[100.6,4.2],[101.3,3.0],[102.2,2.2],[103.5,1.35],[104.2,1.4],[103.8,2.4],[103.4,3.8],[103.1,5.3],[102.3,6.2],[101.3,6.9],[100.6,7.2],[100.0,8.4],[99.3,9.1],[99.2,10.5],[100.0,12.5],[100.4,13.4],[101.0,12.7],[102.3,12.2],[102.9,11.7],[103.5,10.6],[104.0,10.5],[104.8,8.8],[105.3,8.6],[106.7,9.6],[106.8,10.4],[108.0,10.9],[109.2,11.8],[109.3,13.0],[109.2,14.2],[108.7,15.4],[108.2,16.1],[107.5,16.4],[106.6,17.8],[105.9,19.0],[106.6,20.4],[107.7,21.1],[108.3,21.6],[109.7,21.5],[110.4,20.3],[110.9,21.2],[111.9,21.6],[113.0,22.0],[113.7,22.3],[114.3,22.2],[114.9,22.6],[116.3,22.9],[117.2,23.6],[118.3,24.5],[119.6,25.6],[120.3,26.6],[120.0,27.5],[121.2,28.3],[121.6,29.5],[121.9,30.2],[121.9,31.0],[121.6,31.6],[121.2,32.5],[120.6,33.3],[119.3,34.5],[119.4,35.4],[120.5,36.1],[120.7,36.8],[122.5,37.4],[121.4,37.6],[119.0,37.2],[118.0,38.4],[117.6,39.0],[118.9,39.1],[119.7,39.8],[121.0,40.7],[122.2,40.6],[121.5,38.9],[122.6,39.6],[124.4,39.9],[125.2,39.5],[125.3,38.6],[126.0,37.9],[126.6,37.4],[126.4,36.7],[126.5,35.6],[126.3,34.7],[126.9,34.4],[127.7,34.6],[128.3,34.8],[129.1,35.1],[129.4,35.9],[129.4,37.0],[128.5,38.2],[127.6,39.3],[128.4,40.1],[129.7,41.0],[130.6,42.3],[131.2,42.9],[132.5,43.1],[133.7,42.8],[135.2,43.8],[136.5,45.1],[138.0,46.5],[139.3,47.6],[140.5,48.8],[140.3,50.5],[140.6,52.5],[141.3,53.0],[139.9,54.2],[137.2,54.0],[135.2,54.7],[136.0,58.0],[120.0,58.0],[100.0,60.0],[75.0,56.0],[68.0,48.0],[62.0,38.0],[61.0,30.0],[62.0,26.0]],
+[[120.1,23.0],[120.7,22.0],[121.0,22.5],[121.5,24.0],[121.9,25.0],[121.0,25.2],[120.4,24.0]],
+[[108.7,19.2],[109.5,18.2],[110.6,19.0],[110.6,20.1],[109.5,20.0]],
+[[130.9,34.0],[132.0,34.4],[133.5,34.5],[135.1,34.6],[135.5,33.8],[136.8,34.3],[138.2,34.6],[139.9,35.0],[140.8,35.7],[141.0,37.0],[141.5,38.3],[141.9,39.5],[141.5,40.7],[140.8,41.2],[139.9,40.2],[139.8,38.9],[138.5,37.4],[136.7,37.3],[135.5,35.7],[133.3,35.5],[131.8,34.8]],
+[[129.8,33.3],[130.9,33.9],[131.8,33.6],[131.9,32.3],[131.4,31.4],[130.7,31.2],[130.2,32.0]],
+[[132.5,33.6],[133.6,33.5],[134.6,34.1],[134.2,33.2],[133.0,32.8],[132.4,33.4]],
+[[140.0,41.6],[141.5,42.5],[143.3,42.0],[145.6,43.3],[144.3,44.0],[142.0,45.5],[141.6,44.5],[140.2,43.2]],
+[[95.4,3.8],[96.8,2.5],[98.8,1.6],[99.8,0.0],[100.4,-1.2],[101.3,-2.8],[102.4,-4.2],[104.0,-5.5],[105.8,-5.9],[105.9,-4.8],[105.5,-3.2],[104.5,-2.2],[103.5,-1.0],[102.4,0.2],[101.4,1.7],[100.3,2.6],[99.0,3.7],[97.8,4.6],[96.4,5.3],[95.3,5.6]],
+[[105.2,-6.8],[106.0,-6.0],[106.8,-6.0],[108.4,-6.3],[110.4,-6.9],[111.5,-6.5],[112.7,-6.9],[114.4,-7.7],[114.6,-8.7],[112.0,-8.4],[110.0,-8.1],[108.0,-7.8],[106.4,-7.4]],
+[[109.0,1.5],[109.7,2.0],[111.0,1.7],[113.0,3.2],[114.5,4.8],[116.7,6.9],[117.7,6.3],[119.2,5.3],[118.2,4.3],[117.6,2.8],[118.8,1.2],[117.6,0.8],[117.3,-1.0],[116.5,-2.7],[116.0,-4.0],[114.5,-4.0],[113.0,-3.2],[111.5,-3.3],[110.1,-2.9],[109.3,-1.0]],
+[[119.4,-5.5],[120.4,-3.0],[121.0,-1.0],[123.3,0.9],[125.0,1.7],[124.5,0.4],[121.8,0.5],[120.2,0.8],[119.8,-0.5],[118.9,-3.0]],
+[[120.6,18.5],[122.3,18.4],[122.2,16.2],[121.6,14.2],[124.0,13.0],[123.7,12.5],[121.5,13.5],[120.6,14.6],[119.9,16.3]],
+[[122.1,7.0],[123.5,8.7],[125.0,9.6],[126.4,8.5],[126.5,6.5],[125.4,5.6],[124.2,6.2],[123.2,7.7]],
+[[79.9,9.0],[81.2,8.5],[81.8,7.2],[81.0,6.0],[80.0,6.0],[79.8,7.5]],
+[[114.0,-22.0],[116.0,-20.5],[122.0,-17.5],[126.0,-14.0],[129.5,-14.9],[131.0,-12.2],[136.0,-12.0],[136.8,-15.5],[140.0,-17.5],[141.5,-13.0],[142.5,-10.7],[145.5,-15.0],[148.0,-20.0],[150.5,-23.0],[153.2,-26.5],[153.0,-31.0],[150.0,-37.5],[146.0,-39.0],[141.0,-38.2],[137.5,-35.0],[135.0,-34.5],[131.0,-31.5],[124.0,-33.5],[116.0,-35.0],[115.0,-33.5],[115.5,-30.0],[114.0,-26.0]],
+[[131.0,-0.8],[134.0,-0.8],[138.0,-1.7],[141.0,-2.6],[144.5,-3.8],[147.0,-6.0],[147.5,-8.0],[150.0,-10.5],[147.0,-10.0],[143.0,-9.0],[141.0,-9.2],[138.0,-8.2],[137.5,-5.0],[133.5,-4.0],[132.0,-2.8]]
+];
+/* pelabuhan [lat,lon] dan titik jalur laut */
+var PXY={IDJKT:[-6.10,106.88],CNSHA:[31.05,122.30],KRPUS:[35.08,129.05],KRKAN:[34.90,127.72],KRUSN:[35.50,129.40],MYPEN:[5.42,100.33],HKHKG:[22.29,114.15],CNCWN:[22.46,113.86],CNSHK:[22.47,113.90],IDSRG:[-6.94,110.43],THLCH:[13.08,100.89],KRINC:[37.45,126.55],THBKK:[13.5,100.6],SGSIN:[1.26,103.84]};
+var WPT={N1:[28.5,122.6],N2:[26.5,121.6],N3:[24.5,119.7],N4:[22.5,117.5],S1:[20,115.5],S2:[15,113],S3:[10,110],S4:[5,107.5],SGE:[1.35,104.4],
+ M1:[5.6,100.0],M2:[3.2,100.6],M3:[1.9,102.2],M4:[1.25,103.5],
+ G1:[4.5,105.3],G2:[7.5,104.0],G3:[9.5,102.3],G4:[11.8,101.6],
+ J1:[0.2,105.8],J2:[-1.3,107.2],J3:[-3.0,107.3],J4:[-5.0,106.9],J5:[-4.5,108.2],J6:[-5.6,109.5],
+ KW:[32.6,125.0],KS:[33.2,127.3],KE:[34.3,128.8],KG:[34.35,127.8],
+ PRD:[21.6,114.4],YS1:[36.3,125.2],YS2:[34.2,125.2],G5:[13.0,100.6]};
+var EDGES=[['CNSHA','N1'],['N1','N2'],['N2','N3'],['N3','N4'],['N4','S1'],['S1','S2'],['S2','S3'],['S3','S4'],['S4','SGE'],['S1','PRD'],['PRD','HKHKG'],['PRD','CNCWN'],['CNCWN','CNSHK'],
+ ['SGE','M4'],['M4','M3'],['M3','M2'],['M2','M1'],['M1','MYPEN'],
+ ['SGE','G1'],['G1','G2'],['G2','G3'],['G3','G4'],['G4','THLCH'],
+ ['SGE','J1'],['J1','J2'],['J2','J3'],['J3','J4'],['J4','IDJKT'],['IDSRG','J6'],['J6','J5'],['J5','J3'],
+ ['CNSHA','KW'],['KW','KS'],['KS','KE'],['KE','KRPUS'],['KE','KG'],['KG','KRKAN'],['KS','KG'],['KRPUS','KRUSN'],['THLCH','G5'],['G5','THBKK'],['SGE','SGSIN'],['KRINC','YS1'],['YS1','YS2'],['YS2','KW']];
+var NODES={};Object.keys(PXY).forEach(function(k){NODES[k]=PXY[k]});Object.keys(WPT).forEach(function(k){NODES[k]=WPT[k]});
+var ADJ={};EDGES.forEach(function(e){(ADJ[e[0]]=ADJ[e[0]]||[]).push(e[1]);(ADJ[e[1]]=ADJ[e[1]]||[]).push(e[0])});
+function hav(a,b){var r=Math.PI/180,dl=(b[0]-a[0])*r,dn=(b[1]-a[1])*r,x=Math.sin(dl/2)*Math.sin(dl/2)+Math.cos(a[0]*r)*Math.cos(b[0]*r)*Math.sin(dn/2)*Math.sin(dn/2);return 12742*Math.asin(Math.min(1,Math.sqrt(x)))}
+var ROUTES={};
+function routePath(a,b){
+  var key=a+'>'+b;if(ROUTES[key]!==undefined)return ROUTES[key];
+  var res=null;
+  if(NODES[a]&&NODES[b]){
+    var dist={},prev={},todo=Object.keys(NODES);todo.forEach(function(k){dist[k]=Infinity});dist[a]=0;
+    while(todo.length){
+      todo.sort(function(x,y){return dist[x]-dist[y]});var u=todo.shift();
+      if(dist[u]===Infinity||u===b)break;
+      (ADJ[u]||[]).forEach(function(w){var d=dist[u]+hav(NODES[u],NODES[w]);if(d<dist[w]){dist[w]=d;prev[w]=u}});
+    }
+    if(dist[b]<Infinity){var seq=[b],c=b;while(c!==a){c=prev[c];seq.unshift(c)}
+      var pts=[];
+      for(var i=0;i<seq.length-1;i++){var p=NODES[seq[i]],q=NODES[seq[i+1]],n=Math.max(1,Math.ceil(hav(p,q)/40));
+        for(var j=0;j<n;j++)pts.push([p[0]+(q[0]-p[0])*j/n,p[1]+(q[1]-p[1])*j/n])}
+      pts.push(NODES[b]);
+      var cum=[0];for(var k=1;k<pts.length;k++)cum.push(cum[k-1]+hav(pts[k-1],pts[k]));
+      res={pts:pts,cum:cum,total:cum[cum.length-1]||1};
+    }
+  }
+  ROUTES[key]=res;return res;
+}
+function pathAt(r,f){
+  if(r.pts.length<2)return {lat:r.pts[0][0],lon:r.pts[0][1],i:0};
+  f=Math.max(0,Math.min(1,f));var d=f*r.total,i=1;
+  while(i<r.cum.length-1&&r.cum[i]<d)i++;
+  var d0=r.cum[i-1],d1=r.cum[i],t=d1>d0?(d-d0)/(d1-d0):0,p=r.pts[i-1],q=r.pts[i];
+  return {lat:p[0]+(q[0]-p[0])*t,lon:p[1]+(q[1]-p[1])*t,i:i};
+}
+function nearestFrac(r,lat,lon){var bi=0,bd=1e9;for(var i=0;i<r.pts.length;i++){var d=hav(r.pts[i],[lat,lon]);if(d<bd){bd=d;bi=i}}return {f:r.cum[bi]/r.total,i:bi}}
+function actualOf(v){var a=v.ais;return a&&typeof a.lat==='number'&&typeof a.lon==='number'&&ms(a.posAt)!=null?a:null}
+function vesselAt(v,T){
+  var A=NODES[v.last.code],B=NODES[v.next.code];
+  if(!B)return null;
+  if(v.last.code===v.next.code)return {lat:B[0],lon:B[1],mode:'moored',f:1};
+  var arr=ms(v.next.arrived),t0=ms(v.last.atd),t1=arr!=null?arr:ms(v.next.eta);
+  if(arr!=null&&T>=arr)return {lat:B[0],lon:B[1],mode:'moored',f:1,r:A?routePath(v.last.code,v.next.code):null};
+  var r=A?routePath(v.last.code,v.next.code):null;
+  if(!r||t0==null||t1==null){return arr!=null?{lat:B[0],lon:B[1],mode:'moored',f:1}:null}
+  if(T<=t0)return {lat:A[0],lon:A[1],mode:'at_last',f:0,r:r};
+  var f=(T-t0)/(t1-t0),mode='sailing';
+  if(f>=1){if(v.phase==='waiting_other'){f=0.97;mode='waiting'}else if(arr==null&&v.ais&&v.ais.speed>0.5){f=0.97;mode='sailing'}else return {lat:B[0],lon:B[1],mode:'moored',f:1,r:r}}
+  var ax=actualOf(v),tp=ax?ms(ax.posAt):null;
+  if(ax&&mode==='sailing'&&tp>t0&&tp<t1){
+    var np=nearestFrac(r,ax.lat,ax.lon),w;
+    if(T<=tp){f=np.f*(T-t0)/(tp-t0);w=(T-t0)/(tp-t0)}else{f=np.f+(1-np.f)*(T-tp)/(t1-tp);w=Math.max(0,1-(T-tp)/(t1-tp))}
+    var p0=pathAt(r,np.f),p1=pathAt(r,f);
+    return {lat:p1.lat+w*(ax.lat-p0.lat),lon:p1.lon+w*(ax.lon-p0.lon),mode:'sailing',f:f,r:r,act:Math.abs(T-tp)<=3*36e5,actSrc:ax.posSrc||'AIS',actAt:ax.posAt};
+  }
+  var p=pathAt(r,f);return {lat:p.lat,lon:p.lon,mode:mode,f:f,r:r};
+}
+var G={lon:114,lat:6,zoom:1.0,off:0,sel:null,playing:false,timer:null,hits:[],drag:null,anim:null,spin:false,vis:true,last:0};
+var RM=false;try{RM=window.matchMedia('(prefers-reduced-motion: reduce)').matches}catch(e){}
+var STARS=(function(){var s=[],q=7;for(var i=0;i<110;i++){q=(q*16807)%2147483647;var a=q/2147483647;q=(q*16807)%2147483647;var b=q/2147483647;q=(q*16807)%2147483647;s.push([a,b,0.4+q/2147483647*1.1])}return s})();
+var LANDD=null;
+function densify(poly){var o=[];for(var i=0;i<poly.length;i++){var a=poly[i],b=poly[(i+1)%poly.length],n=Math.max(1,Math.ceil(Math.max(Math.abs(b[0]-a[0]),Math.abs(b[1]-a[1]))/2));for(var j=0;j<n;j++)o.push([a[0]+(b[0]-a[0])*j/n,a[1]+(b[1]-a[1])*j/n])}return o}
+function gT(){return Date.now()+G.off*36e5}
+function cv(n){return getComputedStyle(document.documentElement).getPropertyValue(n).trim()||'#888'}
+function glDraw(){
+  var c=document.getElementById('glc');if(!c||!c.getContext)return;
+  if(!LANDD)LANDD=LAND.map(densify);
+  var size=c.clientWidth||520,dpr=Math.min(2,window.devicePixelRatio||1);
+  if(c.width!==Math.round(size*dpr)){c.width=Math.round(size*dpr);c.height=Math.round(size*dpr)}
+  var x=c.getContext('2d');x.setTransform(dpr,0,0,dpr,0,0);x.clearRect(0,0,size,size);
+  var R=size*0.46*G.zoom,cx=size/2,cy=size/2,l0=G.lon*Math.PI/180,p0=G.lat*Math.PI/180,sp=Math.sin(p0),cp=Math.cos(p0);
+  var pulse=RM?0.5:(Date.now()%1800)/1800;
+  var SKRC='#ff8a4c',HALC='#46d1ff',GOLD='#ffd166',LIME='#7dffa8',RED='#ff5d5d';
+  function P(lat,lon,clamp){
+    var la=lat*Math.PI/180,lo=lon*Math.PI/180-l0,cc=sp*Math.sin(la)+cp*Math.cos(la)*Math.cos(lo);
+    var px=R*Math.cos(la)*Math.sin(lo),py=R*(cp*Math.sin(la)-sp*Math.cos(la)*Math.cos(lo));
+    var vis=cc>0;
+    if(!vis&&clamp){var L=Math.hypot(px,py)||1;px=px/L*R;py=py/L*R}
+    return [cx+px,cy-py,vis];
+  }
+  /* bintang */
+  STARS.forEach(function(s){x.fillStyle='rgba(200,225,255,'+(0.25+s[2]*0.3)+')';x.beginPath();x.arc(s[0]*size,s[1]*size,s[2],0,Math.PI*2);x.fill()});
+  /* atmosfer */
+  var ag=x.createRadialGradient(cx,cy,R*0.96,cx,cy,R*1.16);ag.addColorStop(0,'rgba(70,190,255,0.55)');ag.addColorStop(0.35,'rgba(40,130,230,0.22)');ag.addColorStop(1,'rgba(20,80,200,0)');
+  x.fillStyle=ag;x.beginPath();x.arc(cx,cy,R*1.16,0,Math.PI*2);x.fill();
+  x.save();x.beginPath();x.arc(cx,cy,R,0,Math.PI*2);x.clip();
+  var og=x.createRadialGradient(cx-R*0.32,cy-R*0.4,R*0.05,cx,cy,R*1.05);og.addColorStop(0,'#2a86bd');og.addColorStop(0.45,'#0f4a78');og.addColorStop(1,'#041a33');
+  x.fillStyle=og;x.fillRect(0,0,size,size);
+  /* grid */
+  x.strokeStyle='rgba(140,215,255,0.13)';x.lineWidth=1;
+  for(var lo=-180;lo<180;lo+=15){x.beginPath();var on=false;for(var la=-85;la<=85;la+=5){var q=P(la,lo,false);if(q[2]){if(!on){x.moveTo(q[0],q[1]);on=true}else x.lineTo(q[0],q[1])}else on=false}x.stroke()}
+  for(var la2=-75;la2<=75;la2+=15){x.beginPath();var on2=false;for(var lo2=-180;lo2<=180;lo2+=5){var q2=P(la2,lo2,false);if(q2[2]){if(!on2){x.moveTo(q2[0],q2[1]);on2=true}else x.lineTo(q2[0],q2[1])}else on2=false}x.stroke()}
+  /* daratan */
+  var lg=x.createLinearGradient(0,cy-R,0,cy+R);lg.addColorStop(0,'#46b59a');lg.addColorStop(0.5,'#2b8a82');lg.addColorStop(1,'#1d5f78');
+  x.fillStyle=lg;x.strokeStyle='rgba(200,255,235,0.55)';x.lineWidth=0.9;x.shadowColor='rgba(0,0,0,0.35)';x.shadowBlur=6;
+  LANDD.forEach(function(poly){
+    var any=false,pts=poly.map(function(p){var q=P(p[1],p[0],true);if(q[2])any=true;return q});
+    if(!any)return;
+    x.beginPath();pts.forEach(function(q,i){if(i)x.lineTo(q[0],q[1]);else x.moveTo(q[0],q[1])});x.closePath();x.fill();
+  });
+  x.shadowBlur=0;
+  LANDD.forEach(function(poly){
+    var any=false,pts=poly.map(function(p){var q=P(p[1],p[0],true);if(q[2])any=true;return q});
+    if(!any)return;
+    x.beginPath();pts.forEach(function(q,i){if(i)x.lineTo(q[0],q[1]);else x.moveTo(q[0],q[1])});x.closePath();x.stroke();
+  });
+  /* sorot cahaya dan bayangan tepi */
+  var sh=x.createRadialGradient(cx-R*0.35,cy-R*0.45,R*0.1,cx,cy,R*1.02);sh.addColorStop(0,'rgba(255,255,255,0.10)');sh.addColorStop(0.55,'rgba(255,255,255,0)');sh.addColorStop(1,'rgba(0,10,30,0.55)');
+  x.fillStyle=sh;x.fillRect(0,0,size,size);
+  var T=gT(),placed=[];G.hits=[];
+  var states=VESSELS.map(function(v){return {v:v,s:vesselAt(v,T)}});
+  /* rute */
+  states.forEach(function(o){
+    var s=o.s;if(!s||!s.r)return;var sel=G.sel===o.v.id,colr=o.v.op==='SKR'?SKRC:HALC;
+    x.lineCap='round';x.strokeStyle=colr;x.lineWidth=sel?1.8:1;x.setLineDash([2,5]);x.globalAlpha=sel?0.95:0.4;
+    x.beginPath();var on3=false;
+    s.r.pts.forEach(function(p){var q=P(p[0],p[1],false);if(q[2]){if(!on3){x.moveTo(q[0],q[1]);on3=true}else x.lineTo(q[0],q[1])}else on3=false});x.stroke();
+    x.setLineDash([]);x.globalAlpha=1;x.lineWidth=sel?3.2:2;x.shadowColor=colr;x.shadowBlur=sel?14:8;
+    x.beginPath();on3=false;
+    for(var i=0;i<s.r.pts.length;i++){var pp=s.r.pts[i];if(s.r.cum[i]>s.f*s.r.total)break;var q3=P(pp[0],pp[1],false);if(q3[2]){if(!on3){x.moveTo(q3[0],q3[1]);on3=true}else x.lineTo(q3[0],q3[1])}else on3=false}
+    var cur=P(s.lat,s.lon,false);if(cur[2]&&on3)x.lineTo(cur[0],cur[1]);x.stroke();x.shadowBlur=0;
+  });
+  /* pelabuhan */
+  var used={IDJKT:1};VESSELS.forEach(function(v){used[v.last.code]=1;used[v.next.code]=1});
+  x.textBaseline='middle';
+  Object.keys(used).forEach(function(k){var p=PXY[k];if(!p)return;var q=P(p[0],p[1],false);if(!q[2])return;
+    var big=k==='IDJKT';
+    if(big){x.strokeStyle='rgba(255,209,102,'+(0.7-0.6*pulse)+')';x.lineWidth=2;x.beginPath();x.arc(q[0],q[1],7+pulse*14,0,Math.PI*2);x.stroke()}
+    x.shadowColor=big?GOLD:'#bfe9ff';x.shadowBlur=8;x.fillStyle=big?GOLD:'#e8f6ff';x.beginPath();x.arc(q[0],q[1],big?5:3,0,Math.PI*2);x.fill();x.shadowBlur=0;
+    x.font=(big?'700 11px ':'500 10px ')+cv('--mono');x.fillStyle=big?GOLD:'rgba(210,235,250,0.85)';x.lineWidth=3;x.strokeStyle='rgba(4,20,38,0.85)';
+    var lb=big?'JAKARTA':k;x.strokeText(lb,q[0]+9,q[1]-9);x.fillText(lb,q[0]+9,q[1]-9)});
+  /* kapal */
+  states.forEach(function(o){
+    var s=o.s;if(!s)return;var q=P(s.lat,s.lon,false);if(!q[2])return;
+    var ang=0;
+    if(s.mode==='sailing'||s.mode==='waiting'){var ff=Math.min(s.f,0.995),a2=pathAt(s.r,ff+0.004),b2=P(a2.lat,a2.lon,false);ang=Math.atan2(b2[1]-q[1],b2[0]-q[0])}
+    var sel=G.sel===o.v.id,fill=o.v.op==='SKR'?SKRC:HALC,sz=sel?10:8;
+    if(s.mode==='waiting'){x.strokeStyle='rgba(255,93,93,'+(0.9-0.85*pulse)+')';x.lineWidth=2.5;x.beginPath();x.arc(q[0],q[1],9+pulse*18,0,Math.PI*2);x.stroke()}
+    if(s.act){x.strokeStyle='rgba(125,255,168,'+(0.95-0.8*pulse)+')';x.lineWidth=2;x.beginPath();x.arc(q[0],q[1],10+pulse*12,0,Math.PI*2);x.stroke();x.strokeStyle=LIME;x.lineWidth=2.5;x.beginPath();x.arc(q[0],q[1],sz+3,0,Math.PI*2);x.stroke()}
+    x.save();x.translate(q[0],q[1]);x.shadowColor=fill;x.shadowBlur=14;
+    if(s.mode==='moored'||s.mode==='at_last'){x.beginPath();x.arc(0,0,sz*0.62,0,Math.PI*2)}
+    else{x.rotate(ang);x.beginPath();x.moveTo(sz,0);x.lineTo(-sz*0.8,sz*0.72);x.lineTo(-sz*0.35,0);x.lineTo(-sz*0.8,-sz*0.72);x.closePath()}
+    x.fillStyle=fill;x.fill();x.shadowBlur=0;x.lineWidth=1.6;x.strokeStyle=s.mode==='waiting'?RED:'#ffffff';x.stroke();
+    x.restore();
+    x.font=(sel?'700 12px ':'600 11px ')+cv('--body');x.textBaseline='middle';
+    var tw=x.measureText(o.v.name).width,ly=q[1]+13,tries=0;
+    function hit(){return placed.some(function(r){return q[0]+12<r[0]+r[2]&&q[0]+12+tw>r[0]&&ly-7<r[1]+13&&ly+7>r[1]})}
+    while(hit()&&tries<8){ly+=13;tries++}
+    placed.push([q[0]+12,ly-7,tw]);
+    x.lineWidth=3.5;x.strokeStyle='rgba(3,16,30,0.9)';x.strokeText(o.v.name,q[0]+12,ly);x.fillStyle='#ffffff';x.fillText(o.v.name,q[0]+12,ly);
+    G.hits.push({id:o.v.id,x:q[0],y:q[1]});
+  });
+  x.restore();
+  x.strokeStyle='rgba(120,215,255,0.65)';x.lineWidth=1.5;x.beginPath();x.arc(cx,cy,R,0,Math.PI*2);x.stroke();
+}
+function glLoop(ts){
+  if(RM)return;
+  if(G.vis&&ts-G.last>=40){G.last=ts;if(G.spin&&!G.drag&&!G.anim)G.lon+=0.06;if(!G.drag)glDraw()}
+  requestAnimationFrame(glLoop);
+}
+function glUI(now){
+  var T=gT(),t=document.getElementById('gl-tl');
+  if(t)t.textContent=dt(new Date(T).toISOString())+' WIB · '+(Math.abs(G.off)<0.01?S.gl_now:(G.off>0?'+':'−')+dur(Math.abs(G.off)));
+  var sl=document.getElementById('gl-t');if(sl&&document.activeElement!==sl&&Number(sl.value)!==G.off)sl.value=G.off;
+  var sb=document.getElementById('gl-spin');if(sb)sb.setAttribute('aria-pressed',G.spin?'true':'false');
+  var pb=document.getElementById('gl-play');if(pb){pb.textContent=G.playing?S.gl_pause:S.gl_play;pb.setAttribute('aria-pressed',G.playing?'true':'false')}
+  var c=document.getElementById('glc');if(c)c.setAttribute('aria-label',S.gl_aria);
+  var L=VESSELS.slice().sort(function(a,b){return best(a).t-best(b).t});
+  document.getElementById('gl-list').innerHTML=L.map(function(v){
+    var s=vesselAt(v,T),txt;
+    if(!s)txt=S.gl_unk;
+    else if(s.mode==='moored')txt=S.gl_moor(pn(v.next));
+    else if(s.mode==='at_last')txt=S.gl_atlast(pn(v.last));
+    else if(s.mode==='waiting')txt=S.gl_wait(pn(v.next));
+    else if(s.act)txt=S.gl_actual(s.actSrc,ago(s.actAt,now));
+    else txt=S.gl_sail(pn(v.last),pn(v.next),Math.round(s.f*100));
+    var dot='<i class="dot" style="background:'+(v.op==='SKR'?'var(--accent)':'var(--ais)')+'"></i>';
+    return '<button type="button" class="gl-item" data-id="'+esc(v.id)+'" aria-pressed="'+(G.sel===v.id?'true':'false')+'"><b>'+dot+esc(v.name)+' <span class="vsub">'+esc(v.voy)+' · '+esc(v.op)+'</span></b><span>'+esc(txt)+'</span><span class="vsub">'+S.gl_ais+': '+esc(areaT(v.ais.area))+' · '+esc(v.ais.speed)+' kn · '+ago(v.ais.at,now)+'</span></button>';
+  }).join('');
+}
+function glRender(now){glUI(now||Date.now());glDraw()}
+function glFocus(id){
+  var v=VESSELS.filter(function(x){return x.id===id})[0];if(!v)return;
+  G.sel=id;var s=vesselAt(v,gT());
+  if(s){var a={lon:G.lon,lat:G.lat,z:G.zoom,t0:performance.now()},to={lon:s.lon,lat:Math.max(-60,Math.min(60,s.lat)),z:Math.max(G.zoom,2.2)};
+    var d=((to.lon-a.lon+540)%360)-180;
+    G.anim=function(ts){var k=Math.min(1,(ts-a.t0)/600),e=1-Math.pow(1-k,3);G.lon=a.lon+d*e;G.lat=a.lat+(to.lat-a.lat)*e;G.zoom=a.z+(to.z-a.z)*e;glDraw();if(k<1)requestAnimationFrame(G.anim)};
+    requestAnimationFrame(G.anim)}
+  glRender();
+}
+function glSetOff(h){G.off=Math.max(-72,Math.min(168,h));glRender()}
+function glPlay(on){
+  G.playing=on;if(G.timer){clearInterval(G.timer);G.timer=null}
+  if(on){if(G.off>=167.9)G.off=-72;G.timer=setInterval(function(){G.off+=0.2;if(G.off>=168){G.off=168;glPlay(false)}glRender()},100)}
+  glRender();
+}
+function glInit(){
+  var c=document.getElementById('glc');if(!c)return;
+  c.addEventListener('pointerdown',function(e){G.drag={x:e.clientX,y:e.clientY,lon:G.lon,lat:G.lat,moved:0};G.anim=null;c.setPointerCapture(e.pointerId);c.classList.add('drag')});
+  c.addEventListener('pointermove',function(e){if(!G.drag)return;var dx=e.clientX-G.drag.x,dy=e.clientY-G.drag.y;G.drag.moved=Math.max(G.drag.moved,Math.abs(dx)+Math.abs(dy));
+    var k=0.28/G.zoom;G.lon=G.drag.lon-dx*k;G.lat=Math.max(-80,Math.min(80,G.drag.lat+dy*k));glDraw()});
+  c.addEventListener('pointerup',function(e){
+    var d=G.drag;G.drag=null;c.classList.remove('drag');
+    if(d&&d.moved<5){var r=c.getBoundingClientRect(),px=(e.clientX-r.left)*(c.clientWidth/r.width),py=(e.clientY-r.top)*(c.clientWidth/r.width),best=null,bd=16;
+      G.hits.forEach(function(h){var dd=Math.hypot(h.x-px,h.y-py);if(dd<bd){bd=dd;best=h}});
+      if(best)glFocus(best.id);else{G.sel=null;glRender()}}
+  });
+  c.addEventListener('wheel',function(e){e.preventDefault();G.zoom=Math.max(0.8,Math.min(5,G.zoom*(e.deltaY<0?1.12:0.89)));glDraw()},{passive:false});
+  document.getElementById('gl-zi').addEventListener('click',function(){G.zoom=Math.min(5,G.zoom*1.25);glDraw()});
+  document.getElementById('gl-zo').addEventListener('click',function(){G.zoom=Math.max(0.8,G.zoom/1.25);glDraw()});
+  document.getElementById('gl-rs').addEventListener('click',function(){G.lon=114;G.lat=6;G.zoom=1.0;G.sel=null;glRender()});
+  document.getElementById('gl-play').addEventListener('click',function(){glPlay(!G.playing)});
+  document.getElementById('gl-now').addEventListener('click',function(){glPlay(false);glSetOff(0)});
+  document.getElementById('gl-t').addEventListener('input',function(e){glPlay(false);glSetOff(Number(e.target.value))});
+  document.getElementById('gl-list').addEventListener('click',function(e){var b=e.target.closest&&e.target.closest('.gl-item');if(b)glFocus(b.getAttribute('data-id'))});
+  document.getElementById('gl-spin').addEventListener('click',function(){G.spin=!G.spin;if(RM&&G.spin){G.timerSpin=setInterval(function(){if(G.spin)G.lon+=0.5;glDraw()},100)}glUI(Date.now())});
+  try{new IntersectionObserver(function(en){G.vis=en[0].isIntersecting}).observe(c)}catch(e){}
+  window.addEventListener('resize',function(){glDraw()});
+  requestAnimationFrame(glLoop);
+}
+
+glInit();
+document.getElementById('kpis').addEventListener('click',function(e){
+  var a=e.target.closest&&e.target.closest('a[data-go]');if(!a)return;
+  var el=document.getElementById(a.getAttribute('data-go'));if(!el)return;
+  e.preventDefault();
+  var rm=false;try{rm=window.matchMedia('(prefers-reduced-motion: reduce)').matches}catch(x){}
+  el.scrollIntoView({behavior:rm?'auto':'smooth',block:'start'});
+  el.classList.remove('jump');void el.offsetWidth;el.classList.add('jump');
+  setTimeout(function(){el.classList.remove('jump')},1500);
+});
+setLang(pickLang(),false);
+setInterval(renderAll,30000);
+function startStatic(){
+  var ok=function(r){if(!r.ok)throw new Error(r.status);return r.json()};
+  var get=function(n){return fetch('data/'+n+'.json?t='+Date.now(),{cache:'no-store'}).then(ok)};
+  function load(){
+    Promise.all([get('vessels'),get('cargo'),get('meta')]).then(function(a){
+      var v=a[0].filter(function(o){return o&&o.name&&o.jkt&&o.next&&o.last&&o.ais&&o.term});
+      if(v.length)VESSELS=v;
+      CARGO=a[1].filter(function(o){return o&&o.id&&o.discPlan});
+      META=a[2];LIVE=true;renderAll();
+    }).catch(function(){});
+  }
+  load();setInterval(load,60000);
+  document.addEventListener('visibilitychange',function(){if(!document.hidden)load()});
+}
+if(!(window.claude&&window.claude.use)){startStatic()}else try{
+  window.claude.use('db').then(function(db){
+    if(!db)return;
+    db.collection('vessels').onSnapshot(function(s){
+      if(s.empty)return;
+      VESSELS=s.docs.map(function(d){var o=d.data();return o}).filter(function(o){return o&&o.name&&o.jkt&&o.next&&o.last&&o.ais&&o.term});
+      LIVE=true;renderAll();
+    },function(){});
+    db.collection('cargo').onSnapshot(function(s){if(s.empty)return;CARGO=s.docs.map(function(d){return d.data()}).filter(function(o){return o&&o.id&&o.discPlan});renderAll()},function(){});
+    db.doc('meta/status').onSnapshot(function(s){if(s.exists){META=s.data();renderAll()}},function(){});
+  }).catch(function(){});
+}catch(e){}
+</script>
+
+</body></html>
